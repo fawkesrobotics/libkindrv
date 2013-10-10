@@ -1,0 +1,45 @@
+libkindrv
+=========
+
+Open source library with libusb-based drivers to control robotic arms by Kinova.
+
+
+Installation:
+=============
+
+The installation procedure is based on cmake and contains nothing
+more than the usual procedure:
+
+  # 1. Make a build directory inside libkindrv directory
+
+    mkdir build
+
+  # 2. Run cmake from inside the build directory
+
+    cd build
+    cmake ..
+
+  # 3. Build the kindrv library
+
+    make
+
+  # 4. Install the kindrv library (may need root privileges)
+
+    make install
+
+  # 5. [Optional] Remove build directory
+
+    cd ..
+    rm -rf build
+
+  # 6. [Optional] Build documentation (will build into doc/html directory inside libkindrv directory)
+
+    doxygen Doxyfile.in
+
+
+Of course the default cmake options are availabe, as well as
+using the GUI version of cmake in step 2 with
+
+    cd build
+    ccmake ..
+

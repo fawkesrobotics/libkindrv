@@ -1,0 +1,27 @@
+libkindrv_examples
+==================
+
+simple examples showing the usage of libkindrv
+
+Compilation:
+============
+
+The installation procedure is based on cmake and contains nothing
+more than the usual procedure:
+
+  # 1. Make a build directory inside libkindrv's "example" directory
+
+    mkdir build
+
+  # 2. Run cmake from inside the build directory
+
+    cd build
+    cmake ..
+
+  # 3. Build the example binaries
+
+    make
+
+Now you have the executable binaries in your working directory
+(here it is "build"). Run them to show the results. Also make sure
+to check the cpp files to see how libkindrv is actually used.

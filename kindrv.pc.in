@@ -1,0 +1,12 @@
+# Package Information for pkg-config
+
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=@CMAKE_INSTALL_PREFIX@/bin
+libdir=@CMAKE_INSTALL_PREFIX@/lib
+includedir=@CMAKE_INSTALL_PREFIX@/include
+
+Name: libkindrv
+Description: Open source library for controlling a Kinova Jaco robotic arm via USB
+Version: @libkindrv_VERSION@
+Libs: -L${libdir} -lkindrv
+Cflags: -I${includedir}/libkindrv
