@@ -4,7 +4,8 @@ project (libkindrv)
 # The version number.
 set (libkindrv_VERSION_MAJOR 0)
 set (libkindrv_VERSION_MINOR 1)
-set (libkindrv_VERSION ${libkindrv_VERSION_MAJOR}.${libkindrv_VERSION_MINOR})
+set (libkindrv_VERSION_PATCH 0)
+set (libkindrv_VERSION ${libkindrv_VERSION_MAJOR}.${libkindrv_VERSION_MINOR}.${libkindrv_VERSION_PATCH})
 
 # Compile examples?
 #option (BUILD_EXAMPLES "Build examples?" OFF)
