@@ -15,15 +15,8 @@ set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake_modules/"
 find_package (libusb-1.0 REQUIRED)
 include_directories (${LIBUSB_1_INCLUDE_DIRS})
 
-# set as shared library
-add_library (kindrv SHARED kindrv.cpp exception.cpp)
-
-# link external libraries
-target_link_libraries (kindrv ${LIBUSB_1_LIBRARIES})
-
-# set the install targets
-install (TARGETS kindrv DESTINATION lib)
-install (FILES kindrv.h types.h exception.h DESTINATION include/libkindrv)
+# add subdirectory containing source files
+add_subdirectory (src)
 
 # configure and install pkg-config file
 configure_file ("${CMAKE_SOURCE_DIR}/kindrv.pc.in" "${CMAKE_CURRENT_BINARY_DIR}/libkindrv.pc" @ONLY)

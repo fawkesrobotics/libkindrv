@@ -1,0 +1,16 @@
+cmake_minimum_required (VERSION 2.6)
+
+# include directory containing header files
+include_directories (${libkindrv_SOURCE_DIR}/include)
+
+# set as shared library
+add_library (kindrv SHARED kindrv.cpp exception.cpp)
+
+# link external libraries
+target_link_libraries (kindrv ${LIBUSB_1_LIBRARIES})
+
+# set the install targets
+install (TARGETS kindrv DESTINATION lib)
+
+file (GLOB kindrv_header_files ${libkindrv_SOURCE_DIR}/include/*.h)
+install (FILES ${kindrv_header_files} DESTINATION include/libkindrv)
