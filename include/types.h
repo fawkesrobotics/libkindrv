@@ -90,7 +90,29 @@ typedef struct {
   jaco_position_type_t pos_type; /**< The position type, defines what kind of position this trajectory point is. */
 } jaco_basic_traj_point_t;
 
+/// \brief Simulation of joystick buttons (1 for pressed, 0 for released). Make sure to initialze with 0s!
 typedef unsigned short jaco_joystick_button_t[16];
+
+/// \brief Struct for joystick axis movement. Make sure to initialze with 0s!
+typedef struct {
+  union {
+    float axis[6];      /**< Representing all movement values in one array. */
+    struct {
+      float trans_lr;    /**< (Translation Mode) Move stick +left -right. Left/Right translation of arm. */
+      float trans_fb;    /**< (Translation Mode) Move stick +back -forth. Back/Forth translation to arm. */
+      float trans_rot;   /**< (Translation Mode) Rotate stick +cw -ccw. Up/Down translation of arm. */
+      float wrist_fb;    /**< (Wrist Mode) Move stick +forth -back. Up/Down inclination of wrist. */
+      float wrist_lr;    /**< (Wrist Mode) Move stick +right -left. Forth/Back inclination of wrist. */
+      float wrist_rot;   /**< (Wrist Mode) Rotate stick +cw -ccw. Ccw/cw rotation around wrist. */
+    };
+  };
+} jaco_joystick_axis_t;
+
+/// \brief Each joystick action (button,axis) as a whole is represented by one of this struct. Make sure to initialze with 0s!
+typedef struct {
+  jaco_joystick_button_t button; /**< Simulated buttons. */
+  jaco_joystick_axis_t   axis;   /**< Simulated axes. */
+} jaco_joystick_t;
 
 /// \brief USB packet header struct. All USB packets must have this header structure.
 typedef struct {

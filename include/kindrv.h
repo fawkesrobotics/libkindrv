@@ -64,6 +64,9 @@ class JacoArm
 
   // joystick functionaliy
   void push_joystick_button(unsigned short id);
+  void push_joystick_button(jaco_joystick_button_t &buttons);
+  void move_joystick_axis(jaco_joystick_axis_t &axes);
+  void move_joystick(jaco_joystick_t &state);
   void release_joystick();
 
   // arm movement

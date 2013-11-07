@@ -498,6 +498,36 @@ JacoArm::push_joystick_button(unsigned short id)
 
   error_t e = _cmd_out_in(p);
   if( e != ERROR_NONE )
+    throw KinDrvException("Could not push joystick button! libusb error.");
+}
+
+void
+JacoArm::push_joystick_button(jaco_joystick_button_t &buttons)
+{
+  jaco_joystick_t state;
+  memset(&state, 0, sizeof(state));
+  memcpy(state.button, buttons, 32);
+  move_joystick(state);
+}
+
+void
+JacoArm::move_joystick_axis(jaco_joystick_axis_t &axes)
+{
+  jaco_joystick_t state;
+  memset(&state, 0, sizeof(state));
+  memcpy(&(state.axis), &axes, 24);
+  move_joystick(state);
+}
+
+void
+JacoArm::move_joystick(jaco_joystick_t &state)
+{
+  usb_packet_t p;
+  _usb_header(p, 1, 1, CMD_JOYSTICK, 56);
+  memcpy(&(p.body), &state, 56);
+
+  error_t e = _cmd_out_in(p);
+  if( e != ERROR_NONE )
     throw KinDrvException("Could not send joystick command! libusb error.");
 }
 

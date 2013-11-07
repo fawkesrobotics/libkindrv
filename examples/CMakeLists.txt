@@ -28,6 +28,8 @@ endif (LIBKINDRV_FOUND)
 
 add_executable (libkindrv_ex_simple ex_simple.cpp)
 add_executable (libkindrv_ex_ctrl ex_ctrl.cpp)
+add_executable (libkindrv_ex_joystick ex_joystick.cpp)
 
 target_link_libraries (libkindrv_ex_simple ${LIBKINDRV_LIB})
 target_link_libraries (libkindrv_ex_ctrl ${LIBKINDRV_LIB})
+target_link_libraries (libkindrv_ex_joystick ${LIBKINDRV_LIB})
