@@ -4,6 +4,7 @@
  *
  *  Created: Fri Oct 11 00:031:00 2013
  *  Copyright  2013  Bahram Maleki-Fard
+ *  Copyright  2014  Tekin Mericli
  ****************************************************************************/
 
 /*  This file is part of libkindrv.
@@ -51,10 +52,26 @@ class JacoArm
   // controlling the arm via API (instead of connected joystick)
   void start_api_ctrl();
   void stop_api_ctrl();
+  
+  // TEST: Tekin
+  // start/stop force control / compliance mode
+  void start_force_ctrl();
+  void stop_force_ctrl();
 
   // getter; receiving commands
   jaco_position_t get_cart_pos();
   jaco_position_t get_ang_pos();
+  
+  // TEST: Tekin
+  jaco_position_t get_ang_command();
+  jaco_position_t get_cart_command();
+  jaco_position_t get_ang_vel();
+  jaco_position_t get_cart_force();
+  jaco_position_t get_ang_force();
+  jaco_position_t get_ang_current();
+  jaco_position_t get_ang_current_motor();
+  jaco_sensor_info_t get_sensor_info();
+  
   jaco_retract_mode_t get_status();
 
   // setter; sending basic commands
@@ -77,9 +94,9 @@ class JacoArm
   void set_target_ang(float joints[], float fingers[]);
 
  private:
-   libusb_device_handle *__devh;
-   boost::mutex          __lock;
-   bool                  __auto_ctx;
+  libusb_device_handle *__devh;
+  boost::mutex          __lock;
+  bool                  __auto_ctx;
 
   inline void _usb_header(usb_packet_t &p, unsigned short pid, unsigned short pquant, unsigned short cmdid, unsigned short cmdsize);
   inline int _usb_in(usb_packet_t &p, int &transferred);
@@ -92,6 +109,17 @@ class JacoArm
   // Jaco specific commands
   error_t _get_cart_pos(jaco_position_t &pos);
   error_t _get_ang_pos(jaco_position_t &pos);
+  
+  // TEST: Tekin
+  error_t _get_ang_command(jaco_position_t &pos);
+  error_t _get_cart_command(jaco_position_t &pos);
+  error_t _get_ang_vel(jaco_position_t &pos);
+  error_t _get_cart_force(jaco_position_t &pos);
+  error_t _get_ang_force(jaco_position_t &pos);
+  error_t _get_ang_current(jaco_position_t &pos);
+  error_t _get_ang_current_motor(jaco_position_t &pos);
+  error_t _get_sensor_info(jaco_sensor_info_t &info);
+  
   error_t _send_basic_traj(jaco_basic_traj_point_t &traj);
 
 

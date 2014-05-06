@@ -4,6 +4,7 @@
  *
  *  Created: Fri Oct 11 00:031:00 2013
  *  Copyright  2013  Bahram Maleki-Fard
+ *  Copyright  2014  Tekin Mericli
  ****************************************************************************/
 
 /*  This file is part of libkindrv.
@@ -41,14 +42,27 @@
 #define CMD_CTRL_CART           49
 #define CMD_GET_CART_POS        44
 #define CMD_GET_ANG_POS         15
-#define CMD_GET_CART_INFO       104
-#define CMD_GET_ANG_INFO        105
-#define CMD_GET_ARM_INFO        200
-#define CMD_ERASE_TRAJECTORIES  301
-#define CMD_START_API_CTRL      302
-#define CMD_STOP_API_CTRL       303
-#define CMD_JOYSTICK            305
-#define CMD_SEND_BASIC_TRAJ     308
+
+// TEST: Tekin
+#define CMD_START_FORCE_CTRL      	57
+#define CMD_STOP_FORCE_CTRL       	58
+#define CMD_GET_ANG_COMMAND       	107
+#define CMD_GET_CART_COMMAND    	106
+#define CMD_GET_ANG_VEL         	114
+#define CMD_GET_CART_FORCE      	108
+#define CMD_GET_ANG_FORCE       	109
+#define CMD_GET_ANG_CURRENT     	110
+#define CMD_GET_ANG_CURRENT_MOTOR	113
+#define CMD_GET_SENSOR_INFO		111
+
+#define CMD_GET_CART_INFO       	104
+#define CMD_GET_ANG_INFO        	105
+#define CMD_GET_ARM_INFO        	200
+#define CMD_ERASE_TRAJECTORIES  	301
+#define CMD_START_API_CTRL      	302
+#define CMD_STOP_API_CTRL       	303
+#define CMD_JOYSTICK            	305
+#define CMD_SEND_BASIC_TRAJ     	308
 
 
 
@@ -313,6 +327,50 @@ JacoArm::~JacoArm()
  *   Jaco specific commands (private)
  * \================================================/ */
 error_t
+JacoArm::_get_cart_pos(jaco_position_t &pos)
+{
+  /*
+  usb_packet_t p;
+  _usb_header(p, 1, 1, CMD_GET_CART_POS, 1);
+
+  error_t e = _cmd_out_in(p);
+  if( e == ERROR_NONE )
+  {
+    memcpy(pos.position, p.body + 2, sizeof(pos.position));
+    memcpy(pos.rotation, p.body + 7, sizeof(pos.rotation));
+    memcpy(pos.finger_position, p.body + 10, sizeof(pos.finger_position));
+  }
+  */
+  usb_packet_t p;
+  _usb_header(p, 1, 1, CMD_GET_CART_INFO, 1);
+
+  error_t e = _cmd_out_in(p);
+  if( e == ERROR_NONE )
+  {
+    memcpy(pos.position, p.body, sizeof(pos.position));
+    memcpy(pos.rotation, p.body + 3, sizeof(pos.rotation));
+    memcpy(pos.finger_position, p.body + 6, sizeof(pos.finger_position));
+  }
+  
+  //std::cout << "get cart position message: " << std::endl;
+  //print_message(p);
+  /*
+  if( e != ERROR_NONE )
+    return e;
+
+  memcpy(pos.position, p.body + 2, sizeof(pos.position));
+  memcpy(pos.rotation, p.body + 8, sizeof(pos.rotation));
+  
+  _usb_header(p, 1, 1, CMD_GET_CART_INFO, 1);
+  e = _cmd_out_in(p);
+  if( e == ERROR_NONE )
+    memcpy(pos.finger_position, p.body + 6, sizeof(pos.finger_position));
+  */
+  
+  return e;
+}
+ 
+error_t
 JacoArm::_get_ang_pos(jaco_position_t &pos)
 {
   usb_packet_t p;
@@ -320,28 +378,173 @@ JacoArm::_get_ang_pos(jaco_position_t &pos)
 
   error_t e = _cmd_out_in(p);
   if( e == ERROR_NONE )
+  {
     memcpy(pos.joints, p.body, sizeof(pos.joints));
+    memcpy(pos.finger_position, p.body + 6, sizeof(pos.finger_position));
+  }
+  
+  //std::cout << "get ang position message: " << std::endl;
+  //print_message(p);
+  
+  return e;
+}
+
+
+// TEST: Tekin
+error_t
+JacoArm::_get_ang_command(jaco_position_t &pos)
+{
+  usb_packet_t p;
+  _usb_header(p, 1, 1, CMD_GET_ANG_COMMAND, 1);
+
+  error_t e = _cmd_out_in(p);
+  if( e == ERROR_NONE )
+  {
+    memcpy(pos.joints, p.body, sizeof(pos.joints));
+    memcpy(pos.finger_position, p.body + 6, sizeof(pos.finger_position));
+  }
+  
+  //std::cout << "get ang command message: " << std::endl;
+  //print_message(p);
 
   return e;
 }
 
 error_t
-JacoArm::_get_cart_pos(jaco_position_t &pos)
+JacoArm::_get_cart_command(jaco_position_t &pos)
 {
   usb_packet_t p;
-  _usb_header(p, 1, 1, CMD_GET_CART_POS, 1);
+  _usb_header(p, 1, 1, CMD_GET_CART_COMMAND, 1);
 
   error_t e = _cmd_out_in(p);
-  if( e != ERROR_NONE )
-    return e;
-
-  memcpy(pos.position, p.body + 2, sizeof(pos.position));
-  memcpy(pos.rotation, p.body + 8, sizeof(pos.rotation));
-
-  _usb_header(p, 1, 1, CMD_GET_CART_INFO, 1);
-  e = _cmd_out_in(p);
   if( e == ERROR_NONE )
+  {
+    memcpy(pos.position, p.body, sizeof(pos.position));
+    memcpy(pos.rotation, p.body + 3, sizeof(pos.rotation));
     memcpy(pos.finger_position, p.body + 6, sizeof(pos.finger_position));
+  }
+  
+  //std::cout << "get cart command message: " << std::endl;
+  //print_message(p);
+
+  return e;
+}
+
+error_t
+JacoArm::_get_ang_vel(jaco_position_t &pos)
+{
+  usb_packet_t p;
+  _usb_header(p, 1, 1, CMD_GET_ANG_VEL, 1);
+
+  error_t e = _cmd_out_in(p);
+  if( e == ERROR_NONE )
+  {
+    memcpy(pos.joints, p.body, sizeof(pos.joints));
+    memcpy(pos.finger_position, p.body + 6, sizeof(pos.finger_position));
+  }
+  
+  //std::cout << "get ang velocity message: " << std::endl;
+  //print_message(p);
+
+  return e;
+}
+
+error_t
+JacoArm::_get_cart_force(jaco_position_t &pos)
+{
+  usb_packet_t p;
+  _usb_header(p, 1, 1, CMD_GET_CART_FORCE, 1);
+
+  error_t e = _cmd_out_in(p);
+  if( e == ERROR_NONE )
+  {
+    memcpy(pos.position, p.body, sizeof(pos.position));
+    memcpy(pos.rotation, p.body + 3, sizeof(pos.rotation));
+    memcpy(pos.finger_position, p.body + 6, sizeof(pos.finger_position));
+  }
+
+  //std::cout << "get cart force message: " << std::endl;
+  //print_message(p);
+  
+  return e;
+}
+
+error_t
+JacoArm::_get_ang_force(jaco_position_t &pos)
+{
+  usb_packet_t p;
+  _usb_header(p, 1, 1, CMD_GET_ANG_FORCE, 1);
+
+  error_t e = _cmd_out_in(p);
+  if( e == ERROR_NONE )
+  {
+    memcpy(pos.joints, p.body, sizeof(pos.joints));
+    memcpy(pos.finger_position, p.body + 6, sizeof(pos.finger_position));
+  }
+  
+  //std::cout << "get ang force message: " << std::endl;
+  //print_message(p);
+
+  return e;
+}
+
+error_t
+JacoArm::_get_ang_current(jaco_position_t &pos)
+{
+  usb_packet_t p;
+  _usb_header(p, 1, 1, CMD_GET_ANG_CURRENT, 1);
+
+  error_t e = _cmd_out_in(p);
+  if( e == ERROR_NONE )
+  {
+    memcpy(pos.joints, p.body, sizeof(pos.joints));
+    memcpy(pos.finger_position, p.body + 6, sizeof(pos.finger_position));
+  }
+  
+  //std::cout << "get ang current message: " << std::endl;
+  //print_message(p);
+
+  return e;
+}
+
+error_t
+JacoArm::_get_ang_current_motor(jaco_position_t &pos)
+{
+  usb_packet_t p;
+  _usb_header(p, 1, 1, CMD_GET_ANG_CURRENT_MOTOR, 1);
+
+  error_t e = _cmd_out_in(p);
+  if( e == ERROR_NONE )
+  {
+    memcpy(pos.joints, p.body, sizeof(pos.joints));
+    memcpy(pos.finger_position, p.body + 6, sizeof(pos.finger_position));
+  }
+  
+  //std::cout << "get motor current message: " << std::endl;
+  //print_message(p);
+
+  return e;
+}
+
+error_t
+JacoArm::_get_sensor_info(jaco_sensor_info_t &info)
+{
+  usb_packet_t p;
+  _usb_header(p, 1, 1, CMD_GET_SENSOR_INFO, 1);
+
+  error_t e = _cmd_out_in(p);
+  if( e == ERROR_NONE )
+  {
+    memcpy(&(info.voltage), p.body, sizeof(info.voltage));
+    short offset = sizeof(info.voltage) / sizeof(float);
+    memcpy(&(info.current), p.body + offset, sizeof(info.current));
+    offset += sizeof(info.current) / sizeof(float);
+    memcpy(info.acceleration, p.body + offset, sizeof(info.acceleration));
+    offset += sizeof(info.acceleration) / sizeof(float);
+    memcpy(info.joint_temperature, p.body + offset, sizeof(info.joint_temperature));
+    offset += sizeof(info.joint_temperature) / sizeof(float);
+    memcpy(info.finger_temperature, p.body + offset, sizeof(info.finger_temperature));
+  }
 
   return e;
 }
@@ -390,6 +593,32 @@ JacoArm::stop_api_ctrl()
     throw KinDrvException("Could not stop API control! libusb error.");
 }
 
+// TEST: Tekin
+
+/** Start/enable force control / compliant mode.
+ */
+void
+JacoArm::start_force_ctrl()
+{
+  usb_packet_t p;
+  _usb_header(p, 1, 1, CMD_START_FORCE_CTRL, 0);
+  error_t e = _cmd_out_in(p);
+  if( e != ERROR_NONE )
+    throw KinDrvException("Could not start force/compliant control! libusb error.");
+}
+
+/** Stop/disable force control / compliant mode.
+ */
+void
+JacoArm::stop_force_ctrl()
+{
+  usb_packet_t p;
+  _usb_header(p, 1, 1, CMD_STOP_FORCE_CTRL, 0);
+  error_t e = _cmd_out_in(p);
+  if( e != ERROR_NONE )
+    throw KinDrvException("Could not stop force/compliant control! libusb error.");
+}
+
 /** Set arm control type to angular control. */
 void
 JacoArm::set_control_ang()
@@ -423,22 +652,6 @@ JacoArm::erase_trajectories()
     throw KinDrvException("Could not erase trajectories! libusb error.");
 }
 
-/** Get current angular position of Jaco arm.
- * @return position struct that contains the current joint values
- */
-jaco_position_t
-JacoArm::get_ang_pos()
-{
-  jaco_position_t pos;
-  error_t e = _get_ang_pos(pos);
-  if( e == ERROR_CMD_ID_MISMATCH )
-    throw KinDrvException(e, "Could not get angular position, received packet with wrong CMD_ID.");
-  else if( e != ERROR_NONE )
-    throw KinDrvException(e, "Could not get angular position! libusb error.");
-
-  return pos;
-}
-
 /** Get current cartesian position of Jaco arm.
  * Additionally, this is the method that can fetch joint values of the fingers.
  * Rememer, that at the moment the Jaco firmware can only provide updated cartesian
@@ -456,6 +669,151 @@ JacoArm::get_cart_pos()
     throw KinDrvException(e, "Could not get cartesian position! libusb error.");
 
   return pos;
+}
+
+/** Get current angular position of Jaco arm.
+ * @return position struct that contains the current joint values
+ */
+jaco_position_t
+JacoArm::get_ang_pos()
+{
+  jaco_position_t pos;
+  error_t e = _get_ang_pos(pos);
+  if( e == ERROR_CMD_ID_MISMATCH )
+    throw KinDrvException(e, "Could not get angular position, received packet with wrong CMD_ID.");
+  else if( e != ERROR_NONE )
+    throw KinDrvException(e, "Could not get angular position! libusb error.");
+
+  return pos;
+}
+
+// TEST: Tekin
+/** Get current angular velocities of the arm.
+ * @return universal position struct that contains the current joint velocities
+ */
+jaco_position_t
+JacoArm::get_ang_vel()
+{
+  jaco_position_t pos;
+  error_t e = _get_ang_vel(pos);
+  if( e == ERROR_CMD_ID_MISMATCH )
+    throw KinDrvException(e, "Could not get angular velocities, received packet with wrong CMD_ID.");
+  else if( e != ERROR_NONE )
+    throw KinDrvException(e, "Could not get angular velocities! libusb error.");
+
+  return pos;
+}
+
+/** Get current angular command of the arm. 
+ * @return universal position struct that contains the current joint command
+ */
+jaco_position_t
+JacoArm::get_ang_command()
+{
+  jaco_position_t pos;
+  error_t e = _get_ang_command(pos);
+  if( e == ERROR_CMD_ID_MISMATCH )
+    throw KinDrvException(e, "Could not get angular command, received packet with wrong CMD_ID.");
+  else if( e != ERROR_NONE )
+    throw KinDrvException(e, "Could not get angular command! libusb error.");
+
+  return pos;
+}
+
+/** Get current angular velocities of the arm.
+ * @return universal position struct that contains the current joint velocities
+ */
+jaco_position_t
+JacoArm::get_cart_command()
+{
+  jaco_position_t pos;
+  error_t e = _get_cart_command(pos);
+  if( e == ERROR_CMD_ID_MISMATCH )
+    throw KinDrvException(e, "Could not get cartesian command, received packet with wrong CMD_ID.");
+  else if( e != ERROR_NONE )
+    throw KinDrvException(e, "Could not get cartesian command! libusb error.");
+
+  return pos;
+}
+
+/** Get current cartesian forces of the arm.
+ * @return universal position struct that contains the current cartesian forces
+ */
+jaco_position_t
+JacoArm::get_cart_force()
+{
+  jaco_position_t pos;
+  error_t e = _get_cart_force(pos);
+  if( e == ERROR_CMD_ID_MISMATCH )
+    throw KinDrvException(e, "Could not get cartesian forces, received packet with wrong CMD_ID.");
+  else if( e != ERROR_NONE )
+    throw KinDrvException(e, "Could not get cartesian forces! libusb error.");
+
+  return pos;
+}
+
+/** Get current angular forces of the arm.
+ * @return universal position struct that contains the current angular forces
+ */
+jaco_position_t
+JacoArm::get_ang_force()
+{
+  jaco_position_t pos;
+  error_t e = _get_ang_force(pos);
+  if( e == ERROR_CMD_ID_MISMATCH )
+    throw KinDrvException(e, "Could not get angular forces, received packet with wrong CMD_ID.");
+  else if( e != ERROR_NONE )
+    throw KinDrvException(e, "Could not get angular forces! libusb error.");
+
+  return pos;
+}
+
+/** Get currents that each actuator of the arm consumes on the main supply.
+ * @return universal position struct that contains the joint currents
+ */
+jaco_position_t
+JacoArm::get_ang_current()
+{
+  jaco_position_t pos;
+  error_t e = _get_ang_current(pos);
+  if( e == ERROR_CMD_ID_MISMATCH )
+    throw KinDrvException(e, "Could not get joint currents, received packet with wrong CMD_ID.");
+  else if( e != ERROR_NONE )
+    throw KinDrvException(e, "Could not get joint currents! libusb error.");
+
+  return pos;
+}
+
+/** Get current readings on each actuator of the arm.
+ * @return universal position struct that contains the joint currents
+ */
+jaco_position_t
+JacoArm::get_ang_current_motor()
+{
+  jaco_position_t pos;
+  error_t e = _get_ang_current(pos);
+  if( e == ERROR_CMD_ID_MISMATCH )
+    throw KinDrvException(e, "Could not get joint motor currents, received packet with wrong CMD_ID.");
+  else if( e != ERROR_NONE )
+    throw KinDrvException(e, "Could not get joint motor currents! libusb error.");
+
+  return pos;
+}
+
+/** Get the voltage, current, acceleration, temperature sensor readings of the arm.
+ * @return sensor info struct that contains the sensor values
+ */
+jaco_sensor_info_t
+JacoArm::get_sensor_info()
+{
+  jaco_sensor_info_t info;
+  error_t e = _get_sensor_info(info);
+  if( e == ERROR_CMD_ID_MISMATCH )
+    throw KinDrvException(e, "Could not get sensor readings, received packet with wrong CMD_ID.");
+  else if( e != ERROR_NONE )
+    throw KinDrvException(e, "Could not get sensor readings! libusb error.");
+
+  return info;
 }
 
 /** Get the current retract mode of Jaco arm.

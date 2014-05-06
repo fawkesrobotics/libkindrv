@@ -4,6 +4,7 @@
  *
  *  Created: Fri Oct 11 00:031:00 2013
  *  Copyright  2013  Bahram Maleki-Fard
+ *  Copyright  2014  Tekin Mericli
  ****************************************************************************/
 
 /*  This file is part of libkindrv.
@@ -113,6 +114,16 @@ typedef struct {
   jaco_joystick_button_t button; /**< Simulated buttons. */
   jaco_joystick_axis_t   axis;   /**< Simulated axes. */
 } jaco_joystick_t;
+
+// TEST: Tekin
+/// \brief Struct that holds values of various sensors of the robot
+typedef struct {
+  float voltage;        	/**< The main power supply voltage. (24 V) Unit is V. */
+  float current;		/**< Te main power supply's current. Unit is A. */
+  float acceleration[3];	/**< The value read by the acceleration sensors on the X, Y, Z axes, respectively. Unit is G.	*/
+  float joint_temperature[6];	/**< The value read by the temperature sensor on each actuator. Unit is C°.*/
+  float finger_temperature[3];	/**< The value read by the temperature sensor on each finger. Unit is C°.*/
+} jaco_sensor_info_t;
 
 /// \brief USB packet header struct. All USB packets must have this header structure.
 typedef struct {
