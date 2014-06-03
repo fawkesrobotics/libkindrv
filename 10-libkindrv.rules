@@ -1,0 +1,2 @@
+#libkindrv Kinova arm rules
+SUBSYSTEM=="usb", ATTR{idVendor}=="22cd", MODE="0666", GROUP="users"

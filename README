@@ -27,12 +27,16 @@ more than the usual procedure:
 
     make install
 
-  # 5. [Optional] Remove build directory
+  # 5. Copy 10-libkindr.rules into your udev-rules directory (e.g. /etc/udev/rules.d/)
+
+    sudo cp ../10-libkindrv.rules /etc/udev/rules.d/
+
+  # 6. [Optional] Remove build directory
 
     cd ..
     rm -rf build
 
-  # 6. [Optional] Build documentation (will build into doc/html directory inside libkindrv directory)
+  # 7. [Optional] Build documentation (will build into doc/html directory inside libkindrv directory)
 
     doxygen Doxyfile.in
 
