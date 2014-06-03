@@ -78,7 +78,7 @@ static libusb_device** __devices; // testing
 
 /* /================================================\
  *   Public libusb-control methods
- * \================================================/*/
+ * \================================================/ */
 /** Initialize libusb.
  * This creates a libusb context which is used for the whole KinDrv library.
  * Although a context is always created implicitly when needed (e.g. when
@@ -187,7 +187,7 @@ print_message(usb_packet_t &msg)
 
 /* /================================================\
  *   Generic USB data transfer commands (private)
- * \================================================/*/
+ * \================================================/ */
 
 /** Incoming USB interrupt transfer. */
 inline int
@@ -268,7 +268,7 @@ JacoArm::_cmd_out(short cmd)
 
 /* /================================================\
  *   JacoArm
- * \================================================/*/
+ * \================================================/ */
 /** Constructor. */
 JacoArm::JacoArm() :
   __devh( 0 ),
@@ -311,7 +311,7 @@ JacoArm::~JacoArm()
 
 /* /================================================\
  *   Jaco specific commands (private)
- * \================================================/*/
+ * \================================================/ */
 error_t
 JacoArm::_get_ang_pos(jaco_position_t &pos)
 {
@@ -359,7 +359,7 @@ JacoArm::_send_basic_traj(jaco_basic_traj_point_t &traj)
 
 /* /================================================\
  *   Public JacoArm methods
- * \================================================/*/
+ * \================================================/ */
 /** Start/enable controlling the arm via API/USB.
  * The default is that a connected joystick takes over control as soon as activated.
  * It is recommended to use this command before sending other commands to the arm!
@@ -501,6 +501,10 @@ JacoArm::push_joystick_button(unsigned short id)
     throw KinDrvException("Could not push joystick button! libusb error.");
 }
 
+/** Simulate a push of multiple joystick buttons.
+ * These buttons are "pushed" until the user calls a relase_joystick().
+ * @param buttons The struct containing the values for each button
+ */
 void
 JacoArm::push_joystick_button(jaco_joystick_button_t &buttons)
 {
@@ -510,6 +514,11 @@ JacoArm::push_joystick_button(jaco_joystick_button_t &buttons)
   move_joystick(state);
 }
 
+/** Simulate joystick movement along the joystick axes.
+ * This sets momentary values for the axes, so in order to stop the movement
+ * you need to reset the values, or call release_joystick().
+ * @param axes The struct containing the values for axes movement
+ */
 void
 JacoArm::move_joystick_axis(jaco_joystick_axis_t &axes)
 {
@@ -519,6 +528,10 @@ JacoArm::move_joystick_axis(jaco_joystick_axis_t &axes)
   move_joystick(state);
 }
 
+/** Simulate the global joystick state.
+ * The joystick state is a combination of button values and axes state.
+ * @param state The joystick state contatining button and axes values 
+ */
 void
 JacoArm::move_joystick(jaco_joystick_t &state)
 {
