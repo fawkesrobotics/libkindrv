@@ -21,3 +21,6 @@ add_subdirectory (src)
 # configure and install pkg-config file
 configure_file ("${CMAKE_SOURCE_DIR}/kindrv.pc.in" "${CMAKE_CURRENT_BINARY_DIR}/libkindrv.pc" @ONLY)
 install (FILES "${CMAKE_CURRENT_BINARY_DIR}/libkindrv.pc" DESTINATION lib/pkgconfig)
+
+# install udev-rule
+install (FILES "10-libkindrv.rules" DESTINATION "/etc/udev/rules.d")
