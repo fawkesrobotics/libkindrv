@@ -24,3 +24,7 @@ install (FILES "${CMAKE_CURRENT_BINARY_DIR}/libkindrv.pc" DESTINATION lib/pkgcon
 
 # install udev-rule
 install (FILES "10-libkindrv.rules" DESTINATION "/etc/udev/rules.d")
+
+# uninstall target
+configure_file("${CMAKE_SOURCE_DIR}/cmake_modules/cmake_uninstall.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake" IMMEDIATE @ONLY)
+add_custom_target(uninstall COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
