@@ -17,7 +17,7 @@ set_target_properties(
 target_link_libraries (kindrv ${LIBUSB_1_LIBRARIES})
 
 # set the install targets
-install (TARGETS kindrv DESTINATION lib)
+install (TARGETS kindrv LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}")
 
 file (GLOB kindrv_header_files ${libkindrv_SOURCE_DIR}/include/*.h)
 install (FILES ${kindrv_header_files} DESTINATION include/libkindrv)
