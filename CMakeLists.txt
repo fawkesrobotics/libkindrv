@@ -41,6 +41,7 @@ if (DOXYGEN_FOUND)
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in" "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile" @ONLY)
   if (BUILD_DOC)
     set (API_ALL "ALL")
+    install (DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/doc/html" DESTINATION "share/doc/libkindrv")
   endif()
   add_custom_target(apidoc ${API_ALL}
     COMMAND "${DOXYGEN_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
