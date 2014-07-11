@@ -8,5 +8,5 @@ includedir=@CMAKE_INSTALL_PREFIX@/include
 Name: libkindrv
 Description: Open source library for controlling a Kinova Jaco robotic arm via USB
 Version: @libkindrv_VERSION@
-Libs: -L${libdir} -lkindrv
-Cflags: -I${includedir}/libkindrv
+Libs: -L${libdir} -lkindrv -L@Boost_LIBRARY_DIRS@ -lboost_system
+Cflags: -I${includedir}/libkindrv -I@Boost_INCLUDE_DIRS@

@@ -15,6 +15,7 @@ set_target_properties(
 
 # link external libraries
 target_link_libraries (kindrv ${LIBUSB_1_LIBRARIES})
+target_link_libraries (kindrv ${Boost_LIBRARIES})
 
 # set the install targets
 install (TARGETS kindrv LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}")

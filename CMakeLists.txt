@@ -20,6 +20,10 @@ include (libkindrv_detect_lib_suffix)
 find_package (libusb-1.0 REQUIRED)
 include_directories (${LIBUSB_1_INCLUDE_DIRS})
 
+# find boost-system
+find_package (Boost REQUIRED COMPONENTS system)
+include_directories (${Boost_INCLUDE_DIRS})
+
 # add subdirectory containing source files
 add_subdirectory (src)
 
