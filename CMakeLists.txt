@@ -34,6 +34,22 @@ install (FILES "${CMAKE_CURRENT_BINARY_DIR}/libkindrv.pc" DESTINATION "${CMAKE_I
 # install udev-rule
 install (FILES "10-libkindrv.rules" DESTINATION "/etc/udev/rules.d")
 
+# apidoc target
+find_package (Doxygen)
+if (DOXYGEN_FOUND)
+  option (BUILD_DOC "Build documentation files? If 'OFF', you have to call 'make apidoc' separately" ON)
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in" "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile" @ONLY)
+  if (BUILD_DOC)
+    set (API_ALL "ALL")
+  endif()
+  add_custom_target(apidoc ${API_ALL}
+    COMMAND "${DOXYGEN_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
+    COMMENT "Building API Documentation..."
+  )
+else ()
+  message (WARNING "Doxygen not found! Cannot build documentation ")
+endif()
+
 # uninstall target
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/cmake_uninstall.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake" IMMEDIATE @ONLY)
 add_custom_target(uninstall COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")

@@ -27,18 +27,10 @@ more than the usual procedure:
 
     make install
 
-  # 5. Copy 10-libkindr.rules into your udev-rules directory (e.g. /etc/udev/rules.d/)
-
-    sudo cp ../10-libkindrv.rules /etc/udev/rules.d/
-
-  # 6. [Optional] Remove "build" directory. Skip this step if you want to allow fast uninstalling.
+  # 5. [Optional] Remove "build" directory. Skip this step if you want to allow fast uninstalling.
 
     cd ..
     rm -rf build
-
-  # 7. [Optional] Build documentation (will build into doc/html directory inside libkindrv directory)
-
-    doxygen Doxyfile.in
 
 
 Uninstalling:
@@ -47,6 +39,19 @@ In case you removed the "build" directory, repeat installation steps #1 and #2.
 Simply execute the following from inside the "build" directory (may need root privileges) :
 
     make uninstall
+
+
+
+Documentation:
+====================
+By default, documentation is built when running "make", if Doxygen is available.
+You can find it in the "doc" directory inside the "build" directory.
+In order to disable auto-build of documentation, pass "-DBUILD_DOC=OFF" to cmake.
+Either way, you can always build the documentation by running
+
+    make apidoc
+
+from inside the "build" directory.
 
 
 
