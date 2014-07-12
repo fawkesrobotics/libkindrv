@@ -4,7 +4,7 @@ project (libkindrv)
 # The version number.
 set (libkindrv_VERSION_MAJOR 0)
 set (libkindrv_VERSION_MINOR 1)
-set (libkindrv_VERSION_PATCH 0)
+set (libkindrv_VERSION_PATCH 1)
 set (libkindrv_VERSION ${libkindrv_VERSION_MAJOR}.${libkindrv_VERSION_MINOR}.${libkindrv_VERSION_PATCH})
 
 # add custom CMAKE_MODULE_PATH for our provided modules
