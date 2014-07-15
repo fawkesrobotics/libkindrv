@@ -38,33 +38,32 @@
 #define INTR_LENGTH   64
 #define INTR_TIMEOUT  1000
 
-#define CMD_CTRL_ANG            47
-#define CMD_CTRL_CART           49
-#define CMD_GET_CART_POS        44
-#define CMD_GET_ANG_POS         15
+#define CMD_CTRL_ANG                     47
+#define CMD_CTRL_CART                    49
+#define CMD_START_FORCE_CTRL             57
+#define CMD_STOP_FORCE_CTRL              58
+#define CMD_START_API_CTRL              302
+#define CMD_STOP_API_CTRL               303
 
-// TEST: Tekin
-#define CMD_START_FORCE_CTRL      	57
-#define CMD_STOP_FORCE_CTRL       	58
-#define CMD_GET_ANG_COMMAND       	107
-#define CMD_GET_CART_COMMAND    	106
-#define CMD_GET_ANG_VEL         	114
-#define CMD_GET_CART_FORCE      	108
-#define CMD_GET_ANG_FORCE       	109
-#define CMD_GET_ANG_CURRENT     	110
-#define CMD_GET_ANG_CURRENT_MOTOR	113
-#define CMD_GET_SENSOR_INFO		111
+#define CMD_GET_CART_POS                 44
+#define CMD_GET_ANG_POS                  15
+#define CMD_GET_CART_INFO               104
+#define CMD_GET_ANG_INFO                105
+#define CMD_GET_CART_COMMAND            106
+#define CMD_GET_ANG_COMMAND             107
+#define CMD_GET_CART_FORCE              108
+#define CMD_GET_ANG_FORCE               109
+#define CMD_GET_ANG_VEL                 114
+#define CMD_GET_ANG_CURRENT             110
+#define CMD_GET_ANG_CURRENT_MOTOR       113
 
-#define CMD_GET_CART_INFO       	104
-#define CMD_GET_ANG_INFO        	105
-#define CMD_GET_ARM_INFO        	200
-#define CMD_ERASE_TRAJECTORIES  	301
-#define CMD_START_API_CTRL      	302
-#define CMD_STOP_API_CTRL       	303
-#define CMD_JOYSTICK            	305
-#define CMD_SEND_BASIC_TRAJ     	308
+#define CMD_GET_SENSOR_INFO             111
+#define CMD_GET_ARM_INFO                200
 
+#define CMD_ERASE_TRAJECTORIES          301
+#define CMD_SEND_BASIC_TRAJ             308
 
+#define CMD_JOYSTICK                    305
 
 namespace KinDrv {
 
@@ -351,7 +350,7 @@ JacoArm::_get_cart_pos(jaco_position_t &pos)
     memcpy(pos.rotation, p.body + 3, sizeof(pos.rotation));
     memcpy(pos.finger_position, p.body + 6, sizeof(pos.finger_position));
   }
-  
+
   //std::cout << "get cart position message: " << std::endl;
   //print_message(p);
   /*
@@ -360,16 +359,16 @@ JacoArm::_get_cart_pos(jaco_position_t &pos)
 
   memcpy(pos.position, p.body + 2, sizeof(pos.position));
   memcpy(pos.rotation, p.body + 8, sizeof(pos.rotation));
-  
+
   _usb_header(p, 1, 1, CMD_GET_CART_INFO, 1);
   e = _cmd_out_in(p);
   if( e == ERROR_NONE )
     memcpy(pos.finger_position, p.body + 6, sizeof(pos.finger_position));
   */
-  
+
   return e;
 }
- 
+
 error_t
 JacoArm::_get_ang_pos(jaco_position_t &pos)
 {
@@ -382,15 +381,14 @@ JacoArm::_get_ang_pos(jaco_position_t &pos)
     memcpy(pos.joints, p.body, sizeof(pos.joints));
     memcpy(pos.finger_position, p.body + 6, sizeof(pos.finger_position));
   }
-  
+
   //std::cout << "get ang position message: " << std::endl;
   //print_message(p);
-  
+
   return e;
 }
 
 
-// TEST: Tekin
 error_t
 JacoArm::_get_ang_command(jaco_position_t &pos)
 {
@@ -403,7 +401,7 @@ JacoArm::_get_ang_command(jaco_position_t &pos)
     memcpy(pos.joints, p.body, sizeof(pos.joints));
     memcpy(pos.finger_position, p.body + 6, sizeof(pos.finger_position));
   }
-  
+
   //std::cout << "get ang command message: " << std::endl;
   //print_message(p);
 
@@ -423,7 +421,7 @@ JacoArm::_get_cart_command(jaco_position_t &pos)
     memcpy(pos.rotation, p.body + 3, sizeof(pos.rotation));
     memcpy(pos.finger_position, p.body + 6, sizeof(pos.finger_position));
   }
-  
+
   //std::cout << "get cart command message: " << std::endl;
   //print_message(p);
 
@@ -442,7 +440,7 @@ JacoArm::_get_ang_vel(jaco_position_t &pos)
     memcpy(pos.joints, p.body, sizeof(pos.joints));
     memcpy(pos.finger_position, p.body + 6, sizeof(pos.finger_position));
   }
-  
+
   //std::cout << "get ang velocity message: " << std::endl;
   //print_message(p);
 
@@ -465,7 +463,7 @@ JacoArm::_get_cart_force(jaco_position_t &pos)
 
   //std::cout << "get cart force message: " << std::endl;
   //print_message(p);
-  
+
   return e;
 }
 
@@ -481,7 +479,7 @@ JacoArm::_get_ang_force(jaco_position_t &pos)
     memcpy(pos.joints, p.body, sizeof(pos.joints));
     memcpy(pos.finger_position, p.body + 6, sizeof(pos.finger_position));
   }
-  
+
   //std::cout << "get ang force message: " << std::endl;
   //print_message(p);
 
@@ -500,7 +498,7 @@ JacoArm::_get_ang_current(jaco_position_t &pos)
     memcpy(pos.joints, p.body, sizeof(pos.joints));
     memcpy(pos.finger_position, p.body + 6, sizeof(pos.finger_position));
   }
-  
+
   //std::cout << "get ang current message: " << std::endl;
   //print_message(p);
 
@@ -519,7 +517,7 @@ JacoArm::_get_ang_current_motor(jaco_position_t &pos)
     memcpy(pos.joints, p.body, sizeof(pos.joints));
     memcpy(pos.finger_position, p.body + 6, sizeof(pos.finger_position));
   }
-  
+
   //std::cout << "get motor current message: " << std::endl;
   //print_message(p);
 
@@ -592,8 +590,6 @@ JacoArm::stop_api_ctrl()
   if( e != ERROR_NONE )
     throw KinDrvException("Could not stop API control! libusb error.");
 }
-
-// TEST: Tekin
 
 /** Start/enable force control / compliant mode.
  */
@@ -687,7 +683,6 @@ JacoArm::get_ang_pos()
   return pos;
 }
 
-// TEST: Tekin
 /** Get current angular velocities of the arm.
  * @return universal position struct that contains the current joint velocities
  */
@@ -704,7 +699,7 @@ JacoArm::get_ang_vel()
   return pos;
 }
 
-/** Get current angular command of the arm. 
+/** Get current angular command of the arm.
  * @return universal position struct that contains the current joint command
  */
 jaco_position_t
@@ -888,7 +883,7 @@ JacoArm::move_joystick_axis(jaco_joystick_axis_t &axes)
 
 /** Simulate the global joystick state.
  * The joystick state is a combination of button values and axes state.
- * @param state The joystick state contatining button and axes values 
+ * @param state The joystick state contatining button and axes values
  */
 void
 JacoArm::move_joystick(jaco_joystick_t &state)
