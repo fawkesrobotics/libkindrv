@@ -68,6 +68,15 @@
 
 namespace KinDrv {
 
+// struct for internal usage only! stores USB info about connected arms
+typedef struct usb_device_struct {
+  unsigned int bus;
+  unsigned int address;
+  libusb_device* dev;
+  bool connected;
+  char client_name[20];
+} usb_device_t;
+
 /** The libusb context. Set this so that it doesn't interfer with other contexts,
  * and such that including this lib would use the same context. */
 static libusb_context *__ctx = NULL;
