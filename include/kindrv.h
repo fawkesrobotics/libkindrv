@@ -120,6 +120,8 @@ class JacoArm
   error_t _get_ang_current_motor(jaco_position_t &pos);
   error_t _get_sensor_info(jaco_sensor_info_t &info);
 
+  error_t _update_client_config();
+
   error_t _send_basic_traj(jaco_basic_traj_point_t &traj);
 
 

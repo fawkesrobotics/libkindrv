@@ -548,6 +548,22 @@ JacoArm::_get_sensor_info(jaco_sensor_info_t &info)
   return e;
 }
 
+ error_t
+JacoArm::_update_client_config()
+{
+  usb_packet_t p;
+  error_t e;
+  for( unsigned int i=1; i<=55; ++i ) {
+    _usb_header(p, i, 1, CMD_GET_CLIENT_INFO, 1);
+    e = _cmd_out_in(p);
+    if( e != ERROR_NONE )
+      return e;
+
+    if( i<=2 )
+      memcpy(__client_config.data+(i-1)*56, p.body, 56);
+  }
+}
+
 error_t
 JacoArm::_send_basic_traj(jaco_basic_traj_point_t &traj)
 {
@@ -822,17 +838,9 @@ jaco_client_config_t
 JacoArm::get_client_config(bool refresh)
 {
   if(refresh) {
-    usb_packet_t p;
-    error_t e;
-    for( unsigned int i=1; i<=55; ++i ) {
-      _usb_header(p, i, 1, CMD_GET_CLIENT_INFO, 1);
-      e = _cmd_out_in(p);
-      if( e != ERROR_NONE )
-        throw KinDrvException(e, "Could not get arm status! libusb error.");
-
-      if( i<=2 )
-        memcpy(__client_config.data+(i-1)*56, p.body, 56);
-    }
+    error_t e = _update_client_config();
+    if( e!= ERROR_NONE )
+      throw KinDrvException(e, "Could not get client config! libusb error.");
   }
   return __client_config;
 }
