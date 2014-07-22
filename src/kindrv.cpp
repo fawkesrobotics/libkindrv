@@ -27,6 +27,7 @@
 
 #include <libusb.h>
 #include <stdio.h>
+#include <list>
 
 #include <boost/thread/locks.hpp>
 
@@ -81,6 +82,7 @@ typedef struct usb_device_struct {
  * and such that including this lib would use the same context. */
 static libusb_context *__ctx = NULL;
 static libusb_device** __devices; // testing
+static std::list<usb_device_t> *__connected_arms = new std::list<usb_device_t>();
 
 /*
 #define USB_CMD(ep,msg)         \
@@ -97,6 +99,116 @@ static libusb_device** __devices; // testing
 
 */
 
+
+/* /================================================\
+ *   Private libusb-control methods
+ * \================================================/*/
+void
+list_devices(libusb_device **devices)
+{
+  libusb_device *dev;
+  int i = 0;
+
+  while ((dev = devices[i++]) != NULL) {
+    struct libusb_device_descriptor desc;
+    int r = libusb_get_device_descriptor(dev, &desc);
+    if (r < 0) {
+      fprintf(stderr, "failed to get device descriptor");
+      return;
+    }
+
+    printf("idVendor:%04x  idProduct:%04x  SN:%02x (bus %d, device %d)\n",
+    desc.idVendor, desc.idProduct, desc.iSerialNumber,
+    libusb_get_bus_number(dev), libusb_get_device_address(dev));
+  }
+}
+
+void
+print_message(usb_packet_t &msg)
+{
+  usb_packet_header_t h = msg.header;
+  float *b = msg.body;
+  printf("h: %i  %i  %i  %i \n", h.id_packet, h.packet_quantity, h.command_id, h.command_size);
+  printf("b: ");
+  for(unsigned int i=0; i<2; ++i) {
+    for(unsigned int j=0; j<7; ++j) {
+      printf("%f   ", *b);
+      ++b;
+    }
+    printf("\n   ");
+  }
+}
+
+void
+get_connected_devs()
+{
+  bool tmp_ctx = false;
+  if( __ctx == NULL ) {
+    // try creating a temporary context
+    error_t err = init_usb();
+    if( err != ERROR_NONE )
+       throw KinDrvException(err, "Failed to initialize temporary libusb context");
+  }
+
+  // Get all devices
+  ssize_t cnt;
+  cnt = libusb_get_device_list(__ctx, &__devices);
+  if( cnt<0 )
+    throw KinDrvException("Failed to get usb device_list, libusb error.");
+
+  // iterate over all devices, filter Kinova Jaco devices
+  std::list<usb_device_t> *found_arms = new std::list<usb_device_t>();
+  libusb_device *dev;
+  int i = 0;
+  while ((dev = __devices[i++]) != NULL) {
+    struct libusb_device_descriptor desc;
+    int r = libusb_get_device_descriptor(dev, &desc);
+    if (r < 0)
+      throw KinDrvException("Failed to get device descriptor, libusb error");
+
+    // if device is a JacoArm, we store information about it
+    if( (desc.idVendor == VENDOR_ID) && (desc.idProduct == PRODUCT_ID) ) {
+      usb_device_t arm;
+      arm.bus = libusb_get_bus_number(dev);
+      arm.address = libusb_get_device_address(dev);
+      arm.dev = libusb_ref_device(dev);
+      arm.connected = false;
+      found_arms->push_back(arm);
+    }
+  }
+
+  // Clear usb devices list
+  libusb_free_device_list(__devices, /*auto-unref*/ true);
+
+  // check if previously known devices have been disconnected
+  std::list<usb_device_t>::iterator it, nit;
+  for (it = __connected_arms->begin(); it != __connected_arms->end(); ++it) {
+    for (nit = found_arms->begin(); nit != found_arms->end(); ++nit) {
+      if( ((*it).bus == (*nit).bus) && ((*it).address == (*nit).address) )
+        break;
+    }
+    if( nit == found_arms->end() ) {
+      // A previously known arm has been disconnected (not found on USB port anymore)
+      if( (*it).connected )
+        throw KinDrvException("An arm, that was used and had a USB handle, has been disconnected! Problem, this should never happen");
+
+      // unref its libusb_device and remove it from known devices
+      libusb_unref_device((*it).dev);
+      it = __connected_arms->erase(it);
+    } else {
+      // unref new found device and remove it from the that list
+      libusb_unref_device((*nit).dev);
+      found_arms->erase(nit);
+    }
+  }
+
+  // now add only previously unknown devices to our list
+  for (nit=found_arms->begin(); nit != found_arms->end(); ++nit)
+    __connected_arms->push_back((*nit));
+
+  found_arms->clear();
+  delete(found_arms);
+}
 
 
 /* /================================================\
@@ -137,27 +249,6 @@ close_usb()
   __ctx = NULL;
 }
 
-
-void
-list_devices(libusb_device **devices)
-{
-  libusb_device *dev;
-  int i = 0;
-
-  while ((dev = devices[i++]) != NULL) {
-    struct libusb_device_descriptor desc;
-    int r = libusb_get_device_descriptor(dev, &desc);
-    if (r < 0) {
-      fprintf(stderr, "failed to get device descriptor");
-      return;
-    }
-
-    printf("idVendor:%04x  idProduct:%04x  SN:%02x (bus %d, device %d)\n",
-    desc.idVendor, desc.idProduct, desc.iSerialNumber,
-    libusb_get_bus_number(dev), libusb_get_device_address(dev));
-  }
-}
-
 /** List available usb devices. */
 void
 list_devices()
@@ -188,23 +279,6 @@ list_devices()
 
   if( tmp_ctx )
     close_usb();
-}
-
-
-void
-print_message(usb_packet_t &msg)
-{
-  usb_packet_header_t h = msg.header;
-  float *b = msg.body;
-  printf("h: %i  %i  %i  %i \n", h.id_packet, h.packet_quantity, h.command_id, h.command_size);
-  printf("b: ");
-  for(unsigned int i=0; i<2; ++i) {
-    for(unsigned int j=0; j<7; ++j) {
-      printf("%f   ", *b);
-      ++b;
-    }
-    printf("\n   ");
-  }
 }
 
 
