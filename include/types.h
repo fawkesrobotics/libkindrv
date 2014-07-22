@@ -143,12 +143,20 @@ typedef struct {
 
 /// \brief Struct containing the client information and configuration
 typedef struct {
-  // client information; 100 bytes
-  char id[20];
-  char name[20];
-  char organization[20];
-  char sn[20];
-  char model_no[20];
+  union {
+    unsigned char data[112]; // raw data
+    struct {
+      // client information; 100 bytes
+      char id[20];
+      char name[20];
+      char organization[20];
+      char sn[20];
+      char model_no[20];
+
+      char temp_buffer[12]; // just to make the total size a multiple of 56
+    };
+  };
+/*
 
   jaco_laterality_t laterality;
 
@@ -176,6 +184,7 @@ typedef struct {
 
   int enable_flash_error_log;
   int enable_flash_position_log;
+*/
 } jaco_client_config_t; //2088 bytes
 
 
