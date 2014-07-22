@@ -53,11 +53,16 @@ int main()
 
   printf("Get cartesian values + fingers. \n");
   pos = arm->get_cart_pos();
-  printf("pos: %f  %f  %f \nrot: %f  %f  %f \nfingers: %f  %f  %f ",
+  printf("pos: %f  %f  %f \nrot: %f  %f  %f \nfingers: %f  %f  %f \n",
          pos.position[0], pos.position[1], pos.position[2],
          pos.rotation[0], pos.rotation[1], pos.rotation[2],
          pos.finger_position[0], pos.finger_position[1], pos.finger_position[2]);
 
+
+  printf("Get client configuration: \n");
+  jaco_client_config_t config = arm->get_client_config();
+  printf(" id:%s \n name:%s \n organizaion:%s \n sn:%s \n model_no:%s \n",
+         config.id, config.name, config.organization, config.sn, config.model_no);
 
   // explicitly close libusb context
   KinDrv::close_usb();
