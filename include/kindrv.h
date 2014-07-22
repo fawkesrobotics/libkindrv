@@ -70,6 +70,7 @@ class JacoArm
   jaco_position_t get_ang_current_motor();
   jaco_sensor_info_t get_sensor_info();
 
+  jaco_client_config_t get_client_config(bool refresh=true);
   jaco_retract_mode_t get_status();
 
   // setter; sending basic commands
@@ -95,6 +96,8 @@ class JacoArm
   libusb_device_handle *__devh;
   boost::mutex          __lock;
   bool                  __auto_ctx;
+
+  jaco_client_config_t  __client_config;
 
   inline void _usb_header(usb_packet_t &p, unsigned short pid, unsigned short pquant, unsigned short cmdid, unsigned short cmdsize);
   inline int _usb_in(usb_packet_t &p, int &transferred);

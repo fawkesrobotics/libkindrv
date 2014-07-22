@@ -45,6 +45,7 @@
 #define CMD_START_API_CTRL              302
 #define CMD_STOP_API_CTRL               303
 
+#define CMD_GET_CLIENT_INFO               1
 #define CMD_GET_CART_POS                 44
 #define CMD_GET_ANG_POS                  15
 #define CMD_GET_CART_INFO               104
@@ -809,6 +810,31 @@ JacoArm::get_sensor_info()
     throw KinDrvException(e, "Could not get sensor readings! libusb error.");
 
   return info;
+}
+
+/** Get the current client information of Jaco arm.
+ * This method gets the client information (ID, SerialNumber,..) of the arm.
+ * @param refresh False, if cached values should be used (they usually need to be read just once).
+ *   True, if the values should be read from the arm (default).
+ * @return The current client information
+ */
+jaco_client_config_t
+JacoArm::get_client_config(bool refresh)
+{
+  if(refresh) {
+    usb_packet_t p;
+    error_t e;
+    for( unsigned int i=1; i<=55; ++i ) {
+      _usb_header(p, i, 1, CMD_GET_CLIENT_INFO, 1);
+      e = _cmd_out_in(p);
+      if( e != ERROR_NONE )
+        throw KinDrvException(e, "Could not get arm status! libusb error.");
+
+      if( i<=2 )
+        memcpy(__client_config.data+(i-1)*56, p.body, 56);
+    }
+  }
+  return __client_config;
 }
 
 /** Get the current retract mode of Jaco arm.
