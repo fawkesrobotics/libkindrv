@@ -69,6 +69,12 @@ typedef enum {
   MODE_ERROR            = 25000 /**< This value indicate an error. Most of the time, it is because you received a value that is not part of the enum. */
 } jaco_retract_mode_t;
 
+typedef enum {
+  LATERALITY_LEFT, /**< Left hand. */
+  LATERALITY_RIGHT /**< Right hand. */
+} jaco_laterality_t;
+
+
 /// \brief Jaco universal position struct.
 /** Contains 9 floats. The last 3 are finger positions. The first 6 can be either
  * angular joint values, or cartesian position and rotation values. */
@@ -81,9 +87,9 @@ typedef struct {
     };
   };
   float finger_position[3]; /**< Array containing the three finger positions. */
-} jaco_position_t;
+} jaco_position_t; // 36 bytes
 
-/// \brief USB packet struct. All USB I/O is one of this.
+/// \brief Basic trajectory struct
 typedef struct {
   jaco_position_t target;        /**< The position of this trajectory point. */
   float time_delay;              /**< Time delay. */
@@ -123,6 +129,55 @@ typedef struct {
   float joint_temperature[6];   /**< The value read by the temperature sensor on each actuator. Unit is C°.*/
   float finger_temperature[3];  /**< The value read by the temperature sensor on each finger. Unit is C°.*/
 } jaco_sensor_info_t;
+
+/// \brief User position struct.
+typedef struct {
+  jaco_position_type_t pos_type;
+  float delay;
+  jaco_position_t cartesian_pos;
+  jaco_position_t angular_pos;
+
+  jaco_hand_mode_t hand_mode;
+  float finger_position[3];
+} jaco_user_position_t; // 96 bytes
+
+/// \brief Struct containing the client information and configuration
+typedef struct {
+  // client information; 100 bytes
+  char id[20];
+  char name[20];
+  char organization[20];
+  char sn[20];
+  char model_no[20];
+
+  jaco_laterality_t laterality;
+
+  // thresholds; 20 bytes
+  float max_linear_speed;
+  float max_angular_speed;
+  float max_linear_acc;
+  float max_angular_acc;
+  float max_force;
+
+  float sensibility;
+  float drinking_height;
+
+  // retract settings; 1932 bytes
+  int complex_retract_active;
+  float retracted_position_angle;
+  int retracted_position_count;
+  jaco_user_position_t retract_positions[20]; // 1920 bytes
+
+  float drinking_distance;
+  int fingers_2and3_inverted;
+  float drinking_lenght;
+
+  int reset_at_retract;
+
+  int enable_flash_error_log;
+  int enable_flash_position_log;
+} jaco_client_config_t; //2088 bytes
+
 
 /// \brief USB packet header struct. All USB packets must have this header structure.
 typedef struct {
