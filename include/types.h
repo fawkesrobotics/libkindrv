@@ -132,13 +132,13 @@ typedef struct {
 
 /// \brief User position struct.
 typedef struct {
-  jaco_position_type_t pos_type;
-  float delay;
-  jaco_position_t cartesian_pos;
-  jaco_position_t angular_pos;
+  jaco_position_type_t pos_type;  /**< The position type. */
+  float delay;                    /**< Delay for the trajectory. */
+  jaco_position_t cartesian_pos;  /**< The position in cartesian coordinates (position + rotation). */
+  jaco_position_t angular_pos;    /**< The position in angular joint values. */
 
-  jaco_hand_mode_t hand_mode;
-  float finger_position[3];
+  jaco_hand_mode_t hand_mode;     /**< The hand mode. */
+  float finger_position[3];       /**< Array containing the three finger positions. */
 } jaco_user_position_t; // 96 bytes
 
 /// \brief Struct containing the client information and configuration

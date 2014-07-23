@@ -70,13 +70,13 @@
 
 namespace KinDrv {
 
-// struct for internal usage only! stores USB info about connected arms
+/** struct for internal usage only! stores USB info about connected arms */
 typedef struct usb_device_struct {
-  unsigned int bus;
-  unsigned int address;
-  libusb_device* dev;
-  bool connected;
-  char client_name[20];
+  unsigned int bus;     /**< USB bus number */
+  unsigned int address; /**< USB device address */
+  libusb_device* dev;   /**< libusb_device pointer; refed */
+  bool connected;       /**< Indicates if arm is in use (connected; has a device_handler) or not */
+  char client_name[20]; /**< The name of the Arm (from client_config) */
 } usb_device_t;
 
 /** The libusb context. Set this so that it doesn't interfer with other contexts,
@@ -103,7 +103,7 @@ static std::list<usb_device_t> *__connected_arms = new std::list<usb_device_t>()
 
 /* /================================================\
  *   Private libusb-control methods
- * \================================================/*/
+ * \================================================/ */
 void
 list_devices(libusb_device **devices)
 {
