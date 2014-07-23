@@ -2,7 +2,7 @@
 /***************************************************************************
  *  ex_ctrl.cpp - KinDrv example - control arm, move it around
  *
- *  Created: Fri Oct 11 00:031:00 2013
+ *  Created: Fri Oct 11 00:31:00 2013
  *  Copyright  2013  Bahram Maleki-Fard
  ****************************************************************************/
 

@@ -2,7 +2,7 @@
 /***************************************************************************
  *  ex_simple.cpp - KinDrv example - connect arm and read information
  *
- *  Created: Fri Oct 11 00:031:00 2013
+ *  Created: Fri Oct 11 00:31:00 2013
  *  Copyright  2013  Bahram Maleki-Fard
  ****************************************************************************/
 

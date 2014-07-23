@@ -2,7 +2,7 @@
 /***************************************************************************
  *  kindrv.cpp - KinDrv main cpp file for arm control
  *
- *  Created: Fri Oct 11 00:031:00 2013
+ *  Created: Fri Oct 11 00:31:00 2013
  *  Copyright  2013  Bahram Maleki-Fard
  *  Copyright  2014  Tekin Mericli
  ****************************************************************************/
