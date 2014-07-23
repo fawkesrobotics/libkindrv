@@ -36,6 +36,9 @@ struct libusb_device_handle;
 
 namespace KinDrv {
 
+// internally used struct (see kindrv.cpp for details)
+typedef struct usb_device_struct usb_device_t;
+
 // just to allow using them explicitly. The API will use them implicitly if necessary
 error_t init_usb();
 void close_usb();
@@ -93,6 +96,8 @@ class JacoArm
   void set_target_ang(float joints[], float fingers[]);
 
  private:
+  void Create(usb_device_t &dev);
+
   libusb_device_handle *__devh;
   boost::mutex          __lock;
   bool                  __auto_ctx;

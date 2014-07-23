@@ -28,6 +28,7 @@
 #include <libusb.h>
 #include <stdio.h>
 #include <list>
+#include <cstring>
 
 #include <boost/thread/locks.hpp>
 
@@ -366,7 +367,8 @@ JacoArm::_cmd_out(short cmd)
 /* /================================================\
  *   JacoArm
  * \================================================/ */
-/** Constructor. */
+/** Constructor.
+ * Connects to first available/free arm on USB port. */
 JacoArm::JacoArm() :
   __devh( 0 ),
   __auto_ctx( 0 )
@@ -379,24 +381,65 @@ JacoArm::JacoArm() :
     __auto_ctx = true;
   }
 
-  // Get device handle by vendorId and productId
-  __devh = libusb_open_device_with_vid_pid(__ctx, VENDOR_ID, PRODUCT_ID);
-  if( !__devh )
+  //  refreshing the deviecs list
+  get_connected_devs();
+
+  // Open first unconnected device
+  if( __connected_arms->size() == 0)
+    throw KinDrvException("No Kinova Jaco Arm connected!" );
+
+  // Find first free device
+  std::list<usb_device_t>::iterator it;
+  for (it=__connected_arms->begin(); it != __connected_arms->end(); ++it) {
+    if( !(*it).connected )
+      break;
+  }
+  if( it == __connected_arms->end() )
+    throw KinDrvException("All identified arms are already connected and have a USB handle!");
+  else
+    Create(*it);
+
+  // get and store client information
+  _update_client_config();
+  memcpy((*it).client_name, __client_config.name, 20);
+}
+
+/** Internal creator.
+ * This gets the actual device-handle, and establishes the USB connection.
+ */
+void
+JacoArm::Create(usb_device_t &dev)
+{
+  // Get device handle
+  if( libusb_open(dev.dev, &__devh) )
     throw KinDrvException("Failed getting usb-device-handle for JacoArm!" );
 
   // Claim usb interface
   if( libusb_claim_interface(__devh, 0) < 0 )
     throw KinDrvException("Could not claim usb interface 0!");
+
+  dev.connected = true;
+  libusb_unref_device(dev.dev);
 }
 
 /** Destructor. */
 JacoArm::~JacoArm()
 {
   if( __devh != NULL ) {
+    // restore ref to the libusb_device, and mark it as unconnected
+    for (std::list<usb_device_t>::iterator it=__connected_arms->begin(); it != __connected_arms->end(); ++it) {
+      if( (*it).connected && (strcmp((*it).client_name, __client_config.name)==0) ) {
+        (*it).dev = libusb_ref_device(libusb_get_device(__devh));
+        (*it).connected = false;
+        break;
+      }
+    }
+
     // need to relase interface and device-handler
     libusb_release_interface(__devh, 0);
     libusb_close(__devh);
   }
+
   if( __auto_ctx ) {
     // libusb context was created implicitly. so delete it now
     close_usb();
