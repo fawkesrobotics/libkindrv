@@ -211,6 +211,17 @@ get_connected_devs()
   delete(found_arms);
 }
 
+void
+unref_connected_devs(bool remove/*=false*/)
+{
+  for (std::list<usb_device_t>::iterator it=__connected_arms->begin(); it != __connected_arms->end(); ++it) {
+    if( !(*it).connected ) {
+      libusb_unref_device((*it).dev);
+      if( remove )
+        it = __connected_arms->erase(it);
+    }
+  }
+}
 
 /* /================================================\
  *   Public libusb-control methods
@@ -246,6 +257,8 @@ init_usb()
 void
 close_usb()
 {
+  unref_connected_devs(/*remove*/ true);
+
   libusb_exit(__ctx);
   __ctx = NULL;
 }
