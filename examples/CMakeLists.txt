@@ -43,6 +43,7 @@ endif (PKG_CONFIG_FOUND)
 
 if (LIBKINDRV_FOUND)
   include_directories (${LIBKINDRV_INCLUDE_DIRS})
+  link_directories (${LIBKINDRV_LIBRARY_DIRS})
 else (LIBKINDRV_FOUND)
   message(FATAL_ERROR "Could not find libkindrv!")
 endif (LIBKINDRV_FOUND)
