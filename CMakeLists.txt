@@ -34,7 +34,10 @@ configure_file ("${CMAKE_CURRENT_SOURCE_DIR}/kindrv.pc.in" "${CMAKE_CURRENT_BINA
 install (FILES "${CMAKE_CURRENT_BINARY_DIR}/libkindrv.pc" DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 
 # install udev-rule
-install (FILES "10-libkindrv.rules" DESTINATION "/etc/udev/rules.d")
+option (INSTALL_UDEV "Install udev-rule? Needs root privileges, as it writes to '/etc' directory." ON)
+if (INSTALL_UDEV)
+  install (FILES "10-libkindrv.rules" DESTINATION "/etc/udev/rules.d" OPTIONAL)
+endif()
 
 # apidoc target
 find_package (Doxygen)
