@@ -149,6 +149,8 @@ get_connected_devs()
     error_t err = init_usb();
     if( err != ERROR_NONE )
        throw KinDrvException(err, "Failed to initialize temporary libusb context");
+    else
+      tmp_ctx = true;
   }
 
   // Get all devices
@@ -209,6 +211,9 @@ get_connected_devs()
 
   found_arms->clear();
   delete(found_arms);
+
+  if( tmp_ctx )
+    close_usb();
 }
 
 void
@@ -687,7 +692,7 @@ JacoArm::_get_sensor_info(jaco_sensor_info_t &info)
   return e;
 }
 
- error_t
+error_t
 JacoArm::_update_client_config()
 {
   usb_packet_t p;
@@ -701,6 +706,8 @@ JacoArm::_update_client_config()
     if( i<=2 )
       memcpy(__client_config.data+(i-1)*56, p.body, 56);
   }
+
+  return e;
 }
 
 error_t
