@@ -7,6 +7,8 @@ set (libkindrv_VERSION_MINOR 1)
 set (libkindrv_VERSION_PATCH 1)
 set (libkindrv_VERSION ${libkindrv_VERSION_MAJOR}.${libkindrv_VERSION_MINOR}.${libkindrv_VERSION_PATCH})
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
+
 # add custom CMAKE_MODULE_PATH for our provided modules
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules/")
 
