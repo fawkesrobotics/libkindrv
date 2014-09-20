@@ -97,6 +97,7 @@ class JacoArm
 
  private:
   void Create(usb_device_t &dev);
+  void _flush();
 
   libusb_device_handle *__devh;
   boost::mutex          __lock;

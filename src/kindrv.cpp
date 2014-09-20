@@ -379,7 +379,22 @@ JacoArm::_cmd_out(short cmd)
   return ERROR_NONE;
 }
 
+/** Flush all packets on incoming port */
+void
+JacoArm::_flush()
+{
+  if( __devh != NULL ) {
+    int r, transferred;
+    usb_packet_t p;
 
+    boost::lock_guard<boost::mutex> lock(__lock);
+
+    // read and discard all the data that is coming in
+    do {
+      r = _usb_in(p, transferred);
+    } while( r==0 && transferred>0 );
+  }
+}
 
 
 /* /================================================\
@@ -416,6 +431,9 @@ JacoArm::JacoArm() :
     throw KinDrvException("All identified arms are already connected and have a USB handle!");
   else
     Create(*it);
+
+  // flush possible levtovers
+  _flush();
 
   // get and store client information
   _update_client_config();
