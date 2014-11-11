@@ -27,6 +27,8 @@
 
 #include <libusb.h>
 #include <stdio.h>
+#include <list>
+#include <cstring>
 
 #include <boost/thread/locks.hpp>
 
@@ -45,6 +47,7 @@
 #define CMD_START_API_CTRL              302
 #define CMD_STOP_API_CTRL               303
 
+#define CMD_GET_CLIENT_INFO               1
 #define CMD_GET_CART_POS                 44
 #define CMD_GET_ANG_POS                  15
 #define CMD_GET_CART_INFO               104
@@ -67,10 +70,21 @@
 
 namespace KinDrv {
 
+/** struct for internal usage only! stores USB info about connected arms */
+typedef struct usb_device_struct {
+  unsigned int bus;     /**< USB bus number */
+  unsigned int address; /**< USB device address */
+  libusb_device* dev;   /**< libusb_device pointer; refed */
+  bool connected;       /**< Indicates if arm is in use (connected; has a device_handler) or not */
+  char client_name[20]; /**< The name of the Arm (from client_config) */
+} usb_device_t;
+
 /** The libusb context. Set this so that it doesn't interfer with other contexts,
  * and such that including this lib would use the same context. */
 static libusb_context *__ctx = NULL;
+static bool            __auto_ctx = false;
 static libusb_device** __devices; // testing
+static std::list<usb_device_t> *__connected_arms = new std::list<usb_device_t>();
 
 /*
 #define USB_CMD(ep,msg)         \
@@ -88,6 +102,132 @@ static libusb_device** __devices; // testing
 */
 
 
+/* /================================================\
+ *   Private libusb-control methods
+ * \================================================/ */
+void
+list_devices(libusb_device **devices)
+{
+  libusb_device *dev;
+  int i = 0;
+
+  while ((dev = devices[i++]) != NULL) {
+    struct libusb_device_descriptor desc;
+    int r = libusb_get_device_descriptor(dev, &desc);
+    if (r < 0) {
+      fprintf(stderr, "failed to get device descriptor");
+      return;
+    }
+
+    printf("idVendor:%04x  idProduct:%04x  SN:%02x (bus %d, device %d)\n",
+    desc.idVendor, desc.idProduct, desc.iSerialNumber,
+    libusb_get_bus_number(dev), libusb_get_device_address(dev));
+  }
+}
+
+void
+print_message(usb_packet_t &msg)
+{
+  usb_packet_header_t h = msg.header;
+  float *b = msg.body;
+  printf("h: %i  %i  %i  %i \n", h.id_packet, h.packet_quantity, h.command_id, h.command_size);
+  printf("b: ");
+  for(unsigned int i=0; i<2; ++i) {
+    for(unsigned int j=0; j<7; ++j) {
+      printf("%f   ", *b);
+      ++b;
+    }
+    printf("\n   ");
+  }
+}
+
+void
+get_connected_devs()
+{
+  bool tmp_ctx = false;
+  if( __ctx == NULL ) {
+    // try creating a temporary context
+    error_t err = init_usb();
+    if( err != ERROR_NONE )
+       throw KinDrvException(err, "Failed to initialize temporary libusb context");
+    else
+      tmp_ctx = true;
+  }
+
+  // Get all devices
+  ssize_t cnt;
+  cnt = libusb_get_device_list(__ctx, &__devices);
+  if( cnt<0 )
+    throw KinDrvException("Failed to get usb device_list, libusb error.");
+
+  // iterate over all devices, filter Kinova Jaco devices
+  std::list<usb_device_t> *found_arms = new std::list<usb_device_t>();
+  libusb_device *dev;
+  int i = 0;
+  while ((dev = __devices[i++]) != NULL) {
+    struct libusb_device_descriptor desc;
+    int r = libusb_get_device_descriptor(dev, &desc);
+    if (r < 0)
+      throw KinDrvException("Failed to get device descriptor, libusb error");
+
+    // if device is a JacoArm, we store information about it
+    if( (desc.idVendor == VENDOR_ID) && (desc.idProduct == PRODUCT_ID) ) {
+      usb_device_t arm;
+      arm.bus = libusb_get_bus_number(dev);
+      arm.address = libusb_get_device_address(dev);
+      arm.dev = libusb_ref_device(dev);
+      arm.connected = false;
+      found_arms->push_back(arm);
+    }
+  }
+
+  // Clear usb devices list
+  libusb_free_device_list(__devices, /*auto-unref*/ true);
+
+  // check if previously known devices have been disconnected
+  std::list<usb_device_t>::iterator it, nit;
+  for (it = __connected_arms->begin(); it != __connected_arms->end(); ++it) {
+    for (nit = found_arms->begin(); nit != found_arms->end(); ++nit) {
+      if( ((*it).bus == (*nit).bus) && ((*it).address == (*nit).address) )
+        break;
+    }
+    if( nit == found_arms->end() ) {
+      // A previously known arm has been disconnected (not found on USB port anymore)
+      if( (*it).connected )
+        throw KinDrvException("An arm, that was used and had a USB handle, has been disconnected! Problem, this should never happen");
+
+      // unref its libusb_device and remove it from known devices
+      libusb_unref_device((*it).dev);
+      it = __connected_arms->erase(it);
+    } else {
+      // unref new found device and remove it from the that list
+      libusb_unref_device((*nit).dev);
+      found_arms->erase(nit);
+    }
+  }
+
+  // now add only previously unknown devices to our list
+  for (nit=found_arms->begin(); nit != found_arms->end(); ++nit)
+    __connected_arms->push_back((*nit));
+
+  found_arms->clear();
+  delete(found_arms);
+
+  if( tmp_ctx )
+    close_usb();
+}
+
+void
+unref_connected_devs(bool remove/*=false*/)
+{
+  for (std::list<usb_device_t>::iterator it=__connected_arms->begin(); it != __connected_arms->end(); ++it) {
+    if( !(*it).connected ) {
+      libusb_unref_device((*it).dev);
+      if( remove )
+        it = __connected_arms->erase(it);
+    }
+  }
+}
 
 /* /================================================\
  *   Public libusb-control methods
@@ -117,35 +257,19 @@ init_usb()
 
 /** Exit libusb.
  * This closes the explicitly created libusb context. It is not needed to call
- * this when 'init_usb()' has not been called before. However, calling this does
+ * this when 'init_usb()' has not been called before. Doing so does
  * no harm (no exception throwing etc.).
+ * However, CAUTION, closing the libusb context means you cannot use other libusb
+ * functions afterwards! So DO NOT close the context, if you're still operating on
+ * connected devices.
  */
 void
 close_usb()
 {
+  unref_connected_devs(/*remove*/ true);
+
   libusb_exit(__ctx);
   __ctx = NULL;
-}
-
-
-void
-list_devices(libusb_device **devices)
-{
-  libusb_device *dev;
-  int i = 0;
-
-  while ((dev = devices[i++]) != NULL) {
-    struct libusb_device_descriptor desc;
-    int r = libusb_get_device_descriptor(dev, &desc);
-    if (r < 0) {
-      fprintf(stderr, "failed to get device descriptor");
-      return;
-    }
-
-    printf("idVendor:%04x  idProduct:%04x  SN:%02x (bus %d, device %d)\n",
-    desc.idVendor, desc.idProduct, desc.iSerialNumber,
-    libusb_get_bus_number(dev), libusb_get_device_address(dev));
-  }
 }
 
 /** List available usb devices. */
@@ -178,23 +302,6 @@ list_devices()
 
   if( tmp_ctx )
     close_usb();
-}
-
-
-void
-print_message(usb_packet_t &msg)
-{
-  usb_packet_header_t h = msg.header;
-  float *b = msg.body;
-  printf("h: %i  %i  %i  %i \n", h.id_packet, h.packet_quantity, h.command_id, h.command_size);
-  printf("b: ");
-  for(unsigned int i=0; i<2; ++i) {
-    for(unsigned int j=0; j<7; ++j) {
-      printf("%f   ", *b);
-      ++b;
-    }
-    printf("\n   ");
-  }
 }
 
 
@@ -277,15 +384,13 @@ JacoArm::_cmd_out(short cmd)
 }
 
 
-
-
 /* /================================================\
  *   JacoArm
  * \================================================/ */
-/** Constructor. */
+/** Constructor.
+ * Connects to first available/free arm on USB port. */
 JacoArm::JacoArm() :
-  __devh( 0 ),
-  __auto_ctx( 0 )
+  __devh( 0 )
 {
   if( __ctx == NULL ) {
     // initialize libusb
@@ -295,32 +400,96 @@ JacoArm::JacoArm() :
     __auto_ctx = true;
   }
 
-  // Get device handle by vendorId and productId
-  __devh = libusb_open_device_with_vid_pid(__ctx, VENDOR_ID, PRODUCT_ID);
-  if( !__devh )
+  //  refreshing the devices list
+  get_connected_devs();
+
+  // Open first unconnected device
+  if( __connected_arms->size() == 0)
+    throw KinDrvException("No Kinova Jaco Arm connected!" );
+
+  // Find first free device
+  std::list<usb_device_t>::iterator it;
+  for (it=__connected_arms->begin(); it != __connected_arms->end(); ++it) {
+    if( !(*it).connected )
+      break;
+  }
+  if( it == __connected_arms->end() )
+    throw KinDrvException("All identified arms are already connected and have a USB handle!");
+  else
+    Create(*it);
+
+  // flush possible leftovers on device
+  _flush();
+
+  // get and store client information
+  _update_client_config();
+  memcpy((*it).client_name, __client_config.name, 20);
+}
+
+/** Internal creator.
+ * This gets the actual device-handle, and establishes the USB connection.
+ */
+void
+JacoArm::Create(usb_device_t &dev)
+{
+  // Get device handle
+  if( libusb_open(dev.dev, &__devh) )
     throw KinDrvException("Failed getting usb-device-handle for JacoArm!" );
 
   // Claim usb interface
   if( libusb_claim_interface(__devh, 0) < 0 )
     throw KinDrvException("Could not claim usb interface 0!");
+
+  dev.connected = true;
+  libusb_unref_device(dev.dev);
 }
 
 /** Destructor. */
 JacoArm::~JacoArm()
 {
   if( __devh != NULL ) {
+    // restore ref to the libusb_device, and mark it as unconnected
+    for (std::list<usb_device_t>::iterator it=__connected_arms->begin(); it != __connected_arms->end(); ++it) {
+      if( (*it).connected && (strcmp((*it).client_name, __client_config.name)==0) ) {
+        (*it).dev = libusb_ref_device(libusb_get_device(__devh));
+        (*it).connected = false;
+        break;
+      }
+    }
+
     // need to relase interface and device-handler
     libusb_release_interface(__devh, 0);
     libusb_close(__devh);
   }
+
   if( __auto_ctx ) {
+    // libusb context was created implicitly. Check if devices are still connected
+    for (std::list<usb_device_t>::iterator it=__connected_arms->begin(); it != __connected_arms->end(); ++it) {
+      if( (*it).connected )
+        return;
+    }
     // libusb context was created implicitly. so delete it now
     close_usb();
+    __auto_ctx = false;
   }
 }
 
 
+void
+JacoArm::_flush()
+{
+  if( __devh != NULL ) {
+    int r, transferred;
+    usb_packet_t p;
 
+    boost::lock_guard<boost::mutex> lock(__lock);
+
+    // read and discard as much data as possible
+    do {
+      r = _usb_in(p, transferred);
+    } while ( r==0 && transferred > 0 );
+  }
+}
 
 /* /================================================\
  *   Jaco specific commands (private)
@@ -542,6 +711,24 @@ JacoArm::_get_sensor_info(jaco_sensor_info_t &info)
     memcpy(info.joint_temperature, p.body + offset, sizeof(info.joint_temperature));
     offset += sizeof(info.joint_temperature) / sizeof(float);
     memcpy(info.finger_temperature, p.body + offset, sizeof(info.finger_temperature));
+  }
+
+  return e;
+}
+
+error_t
+JacoArm::_update_client_config()
+{
+  usb_packet_t p;
+  error_t e;
+  for( unsigned int i=1; i<=55; ++i ) {
+    _usb_header(p, i, 1, CMD_GET_CLIENT_INFO, 1);
+    e = _cmd_out_in(p);
+    if( e != ERROR_NONE )
+      return e;
+
+    if( i<=2 )
+      memcpy(__client_config.data+(i-1)*56, p.body, 56);
   }
 
   return e;
@@ -809,6 +996,23 @@ JacoArm::get_sensor_info()
     throw KinDrvException(e, "Could not get sensor readings! libusb error.");
 
   return info;
+}
+
+/** Get the current client information of Jaco arm.
+ * This method gets the client information (ID, SerialNumber,..) of the arm.
+ * @param refresh False, if cached values should be used (they usually need to be read just once).
+ *   True, if the values should be read from the arm (default).
+ * @return The current client information
+ */
+jaco_client_config_t
+JacoArm::get_client_config(bool refresh)
+{
+  if(refresh) {
+    error_t e = _update_client_config();
+    if( e!= ERROR_NONE )
+      throw KinDrvException(e, "Could not get client config! libusb error.");
+  }
+  return __client_config;
 }
 
 /** Get the current retract mode of Jaco arm.

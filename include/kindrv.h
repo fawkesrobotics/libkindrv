@@ -36,6 +36,9 @@ struct libusb_device_handle;
 
 namespace KinDrv {
 
+// internally used struct (see kindrv.cpp for details)
+typedef struct usb_device_struct usb_device_t;
+
 // just to allow using them explicitly. The API will use them implicitly if necessary
 error_t init_usb();
 void close_usb();
@@ -70,6 +73,7 @@ class JacoArm
   jaco_position_t get_ang_current_motor();
   jaco_sensor_info_t get_sensor_info();
 
+  jaco_client_config_t get_client_config(bool refresh=true);
   jaco_retract_mode_t get_status();
 
   // setter; sending basic commands
@@ -92,9 +96,13 @@ class JacoArm
   void set_target_ang(float joints[], float fingers[]);
 
  private:
+  void Create(usb_device_t &dev);
+  void _flush();
+
   libusb_device_handle *__devh;
   boost::mutex          __lock;
-  bool                  __auto_ctx;
+
+  jaco_client_config_t  __client_config;
 
   inline void _usb_header(usb_packet_t &p, unsigned short pid, unsigned short pquant, unsigned short cmdid, unsigned short cmdsize);
   inline int _usb_in(usb_packet_t &p, int &transferred);
@@ -116,6 +124,8 @@ class JacoArm
   error_t _get_ang_current(jaco_position_t &pos);
   error_t _get_ang_current_motor(jaco_position_t &pos);
   error_t _get_sensor_info(jaco_sensor_info_t &info);
+
+  error_t _update_client_config();
 
   error_t _send_basic_traj(jaco_basic_traj_point_t &traj);
 
