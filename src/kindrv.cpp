@@ -82,6 +82,7 @@ typedef struct usb_device_struct {
 /** The libusb context. Set this so that it doesn't interfer with other contexts,
  * and such that including this lib would use the same context. */
 static libusb_context *__ctx = NULL;
+static bool            __auto_ctx = false;
 static libusb_device** __devices; // testing
 static std::list<usb_device_t> *__connected_arms = new std::list<usb_device_t>();
 
@@ -256,8 +257,11 @@ init_usb()
 
 /** Exit libusb.
  * This closes the explicitly created libusb context. It is not needed to call
- * this when 'init_usb()' has not been called before. However, calling this does
+ * this when 'init_usb()' has not been called before. Doing so does
  * no harm (no exception throwing etc.).
+ * However, CAUTION, closing the libusb context means you cannot use other libusb
+ * functions afterwards! So DO NOT close the context, if you're still operating on
+ * connected devices.
  */
 void
 close_usb()
@@ -379,23 +383,6 @@ JacoArm::_cmd_out(short cmd)
   return ERROR_NONE;
 }
 
-/** Flush all packets on incoming port */
-void
-JacoArm::_flush()
-{
-  if( __devh != NULL ) {
-    int r, transferred;
-    usb_packet_t p;
-
-    boost::lock_guard<boost::mutex> lock(__lock);
-
-    // read and discard all the data that is coming in
-    do {
-      r = _usb_in(p, transferred);
-    } while( r==0 && transferred>0 );
-  }
-}
-
 
 /* /================================================\
  *   JacoArm
@@ -403,8 +390,7 @@ JacoArm::_flush()
 /** Constructor.
  * Connects to first available/free arm on USB port. */
 JacoArm::JacoArm() :
-  __devh( 0 ),
-  __auto_ctx( 0 )
+  __devh( 0 )
 {
   if( __ctx == NULL ) {
     // initialize libusb
@@ -414,7 +400,7 @@ JacoArm::JacoArm() :
     __auto_ctx = true;
   }
 
-  //  refreshing the deviecs list
+  //  refreshing the devices list
   get_connected_devs();
 
   // Open first unconnected device
@@ -432,7 +418,7 @@ JacoArm::JacoArm() :
   else
     Create(*it);
 
-  // flush possible levtovers
+  // flush possible leftovers on device
   _flush();
 
   // get and store client information
@@ -477,13 +463,33 @@ JacoArm::~JacoArm()
   }
 
   if( __auto_ctx ) {
+    // libusb context was created implicitly. Check if devices are still connected
+    for (std::list<usb_device_t>::iterator it=__connected_arms->begin(); it != __connected_arms->end(); ++it) {
+      if( (*it).connected )
+        return;
+    }
     // libusb context was created implicitly. so delete it now
     close_usb();
+    __auto_ctx = false;
   }
 }
 
 
+void
+JacoArm::_flush()
+{
+  if( __devh != NULL ) {
+    int r, transferred;
+    usb_packet_t p;
 
+    boost::lock_guard<boost::mutex> lock(__lock);
+
+    // read and discard as much data as possible
+    do {
+      r = _usb_in(p, transferred);
+    } while ( r==0 && transferred > 0 );
+  }
+}
 
 /* /================================================\
  *   Jaco specific commands (private)

@@ -101,7 +101,6 @@ class JacoArm
 
   libusb_device_handle *__devh;
   boost::mutex          __lock;
-  bool                  __auto_ctx;
 
   jaco_client_config_t  __client_config;
 
