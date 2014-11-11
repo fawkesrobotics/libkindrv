@@ -21,12 +21,14 @@ else (PKG_CONFIG_FOUND)
   # find libkindrv
   # no cmake module available yet, therefore these lines instead of
   #  simply using "find_package(libkindrv REQUIRED)"
-  find_library (LIBKINDRV_LIBRARIES kindrv)
+  find_library (LIBKINDRV_LIBRARIES kindrv HINTS ENV LD_LIBRARY_PATH)
   find_path (LIBKINDRV_INCLUDE_DIRS kindrv.h
     PATHS
       /usr/include
       /usr/local/include
       /opt/local/include
+    HINTS
+      ENV CPATH
     PATH_SUFFIXES
       libkindrv
   )
@@ -43,7 +45,9 @@ endif (PKG_CONFIG_FOUND)
 
 if (LIBKINDRV_FOUND)
   include_directories (${LIBKINDRV_INCLUDE_DIRS})
-  link_directories (${LIBKINDRV_LIBRARY_DIRS})
+  if (LIBKINDRV_LIBRARY_DIRS)
+    link_directories (${LIBKINDRV_LIBRARY_DIRS})
+  endif (LIBKINDRV_LIBRARY_DIRS)
 else (LIBKINDRV_FOUND)
   message(FATAL_ERROR "Could not find libkindrv!")
 endif (LIBKINDRV_FOUND)
