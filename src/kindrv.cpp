@@ -83,7 +83,6 @@ typedef struct usb_device_struct {
  * and such that including this lib would use the same context. */
 static libusb_context *__ctx = NULL;
 static bool            __auto_ctx = false;
-static libusb_device** __devices; // testing
 static std::list<usb_device_t> *__connected_arms = new std::list<usb_device_t>();
 
 /*
@@ -156,7 +155,8 @@ get_connected_devs()
 
   // Get all devices
   ssize_t cnt;
-  cnt = libusb_get_device_list(__ctx, &__devices);
+  libusb_device** devices;
+  cnt = libusb_get_device_list(__ctx, &devices);
   if( cnt<0 )
     throw KinDrvException("Failed to get usb device_list, libusb error.");
 
@@ -164,7 +164,7 @@ get_connected_devs()
   std::list<usb_device_t> *found_arms = new std::list<usb_device_t>();
   libusb_device *dev;
   int i = 0;
-  while ((dev = __devices[i++]) != NULL) {
+  while ((dev = devices[i++]) != NULL) {
     struct libusb_device_descriptor desc;
     int r = libusb_get_device_descriptor(dev, &desc);
     if (r < 0)
@@ -182,7 +182,7 @@ get_connected_devs()
   }
 
   // Clear usb devices list
-  libusb_free_device_list(__devices, /*auto-unref*/ true);
+  libusb_free_device_list(devices, /*auto-unref*/ true);
 
   // check if previously known devices have been disconnected
   std::list<usb_device_t>::iterator it, nit;
@@ -288,16 +288,17 @@ list_devices()
 
   // Get devices
   ssize_t cnt;
-  cnt = libusb_get_device_list(__ctx, &__devices);
+  libusb_device** devices;
+  cnt = libusb_get_device_list(__ctx, &devices);
   if( cnt<0 ) {
     fprintf( stderr, "Get_device_list error: %li \n", cnt);
   } else {
     printf("%li USB devices detected \n", cnt);
 
-    list_devices(__devices);
+    list_devices(devices);
 
     // Clear devices list
-    libusb_free_device_list(__devices, /*auto-unref*/ true);
+    libusb_free_device_list(devices, /*auto-unref*/ true);
   }
 
   if( tmp_ctx )
