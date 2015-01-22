@@ -64,6 +64,18 @@ int main()
   printf(" id:%s \n name:%s \n organizaion:%s \n sn:%s \n model_no:%s \n",
          config.id, config.name, config.organization, config.sn, config.model_no);
 
+
+  printf("Get firmware information:\n");
+  jaco_firmware_t firmware = arm->get_firmware();
+  printf("      DSP = %u.%u.%u.%u \n", firmware.dsp[0], firmware.dsp[1], firmware.dsp[2], firmware.dsp[3]);
+  for(unsigned int i=0; i<6; ++i)
+    printf("  joint %u = %u.%u.%u \n", i, firmware.joint[i][0], firmware.joint[i][1], firmware.joint[i][2]);
+  for(unsigned int i=0; i<3; ++i)
+    printf(" finger %u = %u.%u.%u \n", i, firmware.finger[i][0], firmware.finger[i][1], firmware.finger[i][2]);
+  for(unsigned int i=0; i<2; ++i)
+    printf("    CAN %u = %u.%u.%u \n", i, firmware.can[i][0], firmware.can[i][1], firmware.can[i][2]);
+
+
   // explicitly close libusb context
   KinDrv::close_usb();
   return 0;
