@@ -922,6 +922,9 @@ JacoArm::get_ang_pos()
 jaco_position_t
 JacoArm::get_ang_vel()
 {
+  if( __firmware.dsp[0] < 5 )
+    throw KinDrvException(ERROR_CMD_FW_PROBLEM, "Firmware delivers wrong velocities.");
+
   jaco_position_t pos;
   error_t e = _get_ang_vel(pos);
   if( e == ERROR_CMD_ID_MISMATCH )
