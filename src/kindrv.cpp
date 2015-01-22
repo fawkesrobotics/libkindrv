@@ -1046,8 +1046,9 @@ JacoArm::get_sensor_info()
 
 /** Get the current client information of Jaco arm.
  * This method gets the client information (ID, SerialNumber,..) of the arm.
- * @param refresh False, if cached values should be used (they usually need to be read just once).
- *   True, if the values should be read from the arm (default).
+ * @param refresh True, if information should be read from the arm again.
+ *   Default value is "False", as this information usually needs to be read only once, which
+ *   is automatically done when the driver connects to the arm.
  * @return The current client information
  */
 jaco_client_config_t
@@ -1063,7 +1064,7 @@ JacoArm::get_client_config(bool refresh)
 
 /** Get the current firmware information of Jaco arm.
  * This method gets the firmware information of the DSP, joints, fingers and CAN interfaces.
- * @param refresh True, if information should needs to be read from the arm again.
+ * @param refresh True, if information should be read from the arm again.
  *   Default value is "False", as this information usually needs to be read only once, which
  *   is automatically done when the driver connects to the arm.
  * @return The current firmware information

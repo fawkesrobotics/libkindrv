@@ -73,7 +73,7 @@ class JacoArm
   jaco_position_t get_ang_current_motor();
   jaco_sensor_info_t get_sensor_info();
 
-  jaco_client_config_t get_client_config(bool refresh=true);
+  jaco_client_config_t get_client_config(bool refresh=false);
   jaco_firmware_t get_firmware(bool refresh=false);
 
   jaco_retract_mode_t get_status();
