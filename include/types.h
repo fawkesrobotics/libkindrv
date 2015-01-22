@@ -40,7 +40,11 @@ typedef enum {
   ERROR_USB_SHORT_WRITE = 202,
   ERROR_USB_SHORT_READ  = 203,
 
-  ERROR_CMD_ID_MISMATCH = 301,
+  ERROR_CMD_ID_MISMATCH = 301,  /**< Command-ID of outgoing and incoming USB packet do not match.*/
+  ERROR_CMD_UNSUPPORTED = 302,  /**< Command is not supported by this arm. */
+  ERROR_CMD_FW_OUTDATED = 303,  /**< The firmware is outdated and does not support this command yet. */
+  ERROR_CMD_FW_PROBLEM  = 303   /**< The firmware supports the command, but delivers wrong data. */
+
 } error_t;
 
 typedef enum {
