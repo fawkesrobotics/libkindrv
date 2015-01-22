@@ -74,6 +74,8 @@ class JacoArm
   jaco_sensor_info_t get_sensor_info();
 
   jaco_client_config_t get_client_config(bool refresh=true);
+  jaco_firmware_t get_firmware(bool refresh=false);
+
   jaco_retract_mode_t get_status();
 
   // setter; sending basic commands
@@ -103,6 +105,7 @@ class JacoArm
   boost::mutex          __lock;
 
   jaco_client_config_t  __client_config;
+  jaco_firmware_t       __firmware;
 
   inline void _usb_header(usb_packet_t &p, unsigned short pid, unsigned short pquant, unsigned short cmdid, unsigned short cmdsize);
   inline int _usb_in(usb_packet_t &p, int &transferred);
@@ -126,6 +129,7 @@ class JacoArm
   error_t _get_sensor_info(jaco_sensor_info_t &info);
 
   error_t _update_client_config();
+  error_t _update_firmware();
 
   error_t _send_basic_traj(jaco_basic_traj_point_t &traj);
 

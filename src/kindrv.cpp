@@ -48,6 +48,7 @@
 #define CMD_STOP_API_CTRL               303
 
 #define CMD_GET_CLIENT_INFO               1
+#define CMD_GET_FIRMWARE                 36
 #define CMD_GET_CART_POS                 44
 #define CMD_GET_ANG_POS                  15
 #define CMD_GET_CART_INFO               104
@@ -424,6 +425,9 @@ JacoArm::JacoArm() :
   // get and store client information
   _update_client_config();
   memcpy((*it).client_name, __client_config.name, 20);
+
+  // get and store firmware information
+  _update_firmware();
 }
 
 /** Internal creator.
@@ -556,7 +560,6 @@ JacoArm::_get_ang_pos(jaco_position_t &pos)
 
   return e;
 }
-
 
 error_t
 JacoArm::_get_ang_command(jaco_position_t &pos)
@@ -729,6 +732,49 @@ JacoArm::_update_client_config()
 
     if( i<=2 )
       memcpy(__client_config.data+(i-1)*56, p.body, 56);
+  }
+
+  return e;
+}
+
+error_t
+JacoArm::_update_firmware()
+{
+  usb_packet_t p;
+  _usb_header(p, 1, 1, CMD_GET_FIRMWARE, 1);
+  error_t e = _cmd_out_in(p);
+  if( e == ERROR_NONE ) {
+    // copy 4-byte wise, then extract single bytes
+    unsigned int data[13];
+    memcpy(data, p.body, sizeof(data));
+
+    /* data[] is ordered as follows:
+     * 1 DSP    VER.MAJ.MIN
+     * 6 JOINT  VER.MAJ.MIN
+     * 3 FINGER VER.MAJ.MIN
+     * 1 DSP    ITER
+     * 2 CAN    VER.MAJ.MIN
+     */
+
+    // the 4B blocks 2-10 for jonits and fingers are in same order as the struct:
+    for(unsigned int i=0; i<9; ++i) {
+      __firmware.data[i*3 + 0] = (data[i+1] >> 16) & 0xFF;
+      __firmware.data[i*3 + 1] = (data[i+1] >>  8) & 0xFF;
+      __firmware.data[i*3 + 2] =  data[i+1]        & 0xFF;
+    }
+
+    // first block is DSP VER.MAJ.MIN , DSP.ITER is in block 11
+    __firmware.dsp[0] = (data[ 0] >> 16) & 0xFF;
+    __firmware.dsp[1] = (data[ 0] >>  8) & 0xFF;
+    __firmware.dsp[2] =  data[ 0]        & 0xFF;
+    __firmware.dsp[3] =  data[10]        & 0xFF;
+
+    // the last 2 blocks are the CAN interfaces
+    for(unsigned int i=0; i<2; ++i) {
+      __firmware.can[i][0] = (data[11+i] >> 16) & 0xFF;
+      __firmware.can[i][1] = (data[11+i] >>  8) & 0xFF;
+      __firmware.can[i][2] =  data[11+i]        & 0xFF;
+    }
   }
 
   return e;
@@ -1013,6 +1059,24 @@ JacoArm::get_client_config(bool refresh)
       throw KinDrvException(e, "Could not get client config! libusb error.");
   }
   return __client_config;
+}
+
+/** Get the current firmware information of Jaco arm.
+ * This method gets the firmware information of the DSP, joints, fingers and CAN interfaces.
+ * @param refresh True, if information should needs to be read from the arm again.
+ *   Default value is "False", as this information usually needs to be read only once, which
+ *   is automatically done when the driver connects to the arm.
+ * @return The current firmware information
+ */
+jaco_firmware_t
+JacoArm::get_firmware(bool refresh)
+{
+  if(refresh) {
+    error_t e = _update_firmware();
+    if( e!= ERROR_NONE )
+      throw KinDrvException(e, "Could not get firmware information! libusb error.");
+  }
+  return __firmware;
 }
 
 /** Get the current retract mode of Jaco arm.

@@ -187,6 +187,18 @@ typedef struct {
 */
 } jaco_client_config_t; //2088 bytes
 
+/// \brief Struct containing the firmware versions of the arm
+typedef struct {
+  union {
+    unsigned char data[37];             /**< The raw data in a byte array. */
+    struct {
+      unsigned char joint[6][3];        /**< Firmware of the actuators. VERSION.MAJOR.MINOR */
+      unsigned char finger[3][3];       /**< Firmware of the fingers.   VERSION.MAJOR.MINOR */
+      unsigned char dsp[4];             /**< The DSP firmware. VERSION.MAJOR.MINOR.ITER */
+      unsigned char can[2][3];          /**< Firmware of the CAN interfaces. VERSION.MAJOR.MINOR */
+    };
+  };
+} jaco_firmware_t;
 
 /// \brief USB packet header struct. All USB packets must have this header structure.
 typedef struct {
