@@ -1215,6 +1215,15 @@ JacoArm::move_joystick_axis(jaco_joystick_axis_t &axes)
 void
 JacoArm::move_joystick(jaco_joystick_t &state)
 {
+  // On older software, some data is ordered differently.
+  if( __firmware.dsp[0] < 5 ) {
+    float tmp = state.axis.wrist_lr;
+    state.axis.wrist_lr = state.axis.wrist_fb;
+    state.axis.wrist_fb = tmp;
+
+    state.axis.wrist_rot *= -1.f;
+  }
+
   usb_packet_t p;
   _usb_header(p, 1, 1, CMD_JOYSTICK, 56);
   memcpy(&(p.body), &state, 56);

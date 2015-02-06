@@ -117,9 +117,9 @@ typedef struct {
       float trans_lr;    /**< (Translation Mode) Move stick +left -right. Left/Right translation of arm. */
       float trans_fb;    /**< (Translation Mode) Move stick +back -forth. Back/Forth translation to arm. */
       float trans_rot;   /**< (Translation Mode) Rotate stick +cw -ccw. Up/Down translation of arm. */
-      float wrist_fb;    /**< (Wrist Mode) Move stick +forth -back. Up/Down inclination of wrist. */
       float wrist_lr;    /**< (Wrist Mode) Move stick +right -left. Forth/Back inclination of wrist. */
-      float wrist_rot;   /**< (Wrist Mode) Rotate stick +cw -ccw. Ccw/cw rotation around wrist. */
+      float wrist_fb;    /**< (Wrist Mode) Move stick +forth -back. Up/Down inclination of wrist. */
+      float wrist_rot;   /**< (Wrist Mode) Rotate stick +cw -ccw. Cw/ccw rotation around wrist. */
     };
   };
 } jaco_joystick_axis_t;
