@@ -76,7 +76,7 @@ class JacoArm
   jaco_client_config_t get_client_config(bool refresh=false);
   jaco_firmware_t get_firmware(bool refresh=false);
 
-  jaco_retract_mode_t get_status();
+  jaco_status_t get_status();
 
   // setter; sending basic commands
   void set_control_ang();
@@ -127,6 +127,8 @@ class JacoArm
   error_t _get_ang_current(jaco_position_t &pos);
   error_t _get_ang_current_motor(jaco_position_t &pos);
   error_t _get_sensor_info(jaco_sensor_info_t &info);
+  error_t _get_status(jaco_status_t &status);
+  error_t _get_retract_status(jaco_status_t &status);
 
   error_t _update_client_config();
   error_t _update_firmware();

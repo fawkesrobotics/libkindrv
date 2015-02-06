@@ -78,6 +78,11 @@ typedef enum {
   LATERALITY_RIGHT /**< Right hand. */
 } jaco_laterality_t;
 
+typedef enum {
+  STATE_UNKNOWN = -1, /**< State is unknown, probably due to firmware incompabilities */
+  STATE_ON      =  0, /**< OFF state. See as "disabled|unavailable" */
+  STATE_OFF     =  1  /**< ON state. Equivalent to "enabled|available" */
+} jaco_state_t;
 
 /// \brief Jaco universal position struct.
 /** Contains 9 floats. The last 3 are finger positions. The first 6 can be either
@@ -203,6 +208,16 @@ typedef struct {
     };
   };
 } jaco_firmware_t;
+
+///\brief Struct holding status of arm components
+typedef struct {
+  jaco_state_t finger_initialized[3]; /**< Check if fingers are initialized */
+  jaco_retract_mode_t retract;        /**< Check retract status */
+  jaco_state_t controller;            /**< Check if controller is enabled */
+  jaco_state_t force_control;         /**< Check if force-control is enabled */
+  jaco_state_t current_limitation;    /**< Check if current-limitation is enabled */
+  jaco_state_t torque_sensor;         /**< Check if torque sensors are available */
+} jaco_status_t;
 
 /// \brief USB packet header struct. All USB packets must have this header structure.
 typedef struct {

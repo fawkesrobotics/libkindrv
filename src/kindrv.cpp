@@ -63,6 +63,7 @@
 
 #define CMD_GET_SENSOR_INFO             111
 #define CMD_GET_ARM_INFO                200
+#define CMD_GET_ARM_STATUS               62
 
 #define CMD_ERASE_TRAJECTORIES          301
 #define CMD_SEND_BASIC_TRAJ             308
@@ -719,6 +720,61 @@ JacoArm::_get_sensor_info(jaco_sensor_info_t &info)
   return e;
 }
 
+/** Use new method with 1 USB packet to get status. */
+error_t
+JacoArm::_get_status(jaco_status_t &status)
+{
+  usb_packet_t p;
+  _usb_header(p, 1, 1, CMD_GET_ARM_STATUS, 1);
+
+  error_t e = _cmd_out_in(p);
+  if( e == ERROR_NONE )
+  {
+    // data in p.body is byte-wise
+    unsigned char data[16];
+    memcpy(data, p.body, sizeof(data));
+    status.finger_initialized[0] = (jaco_state_t)data[ 0];
+    status.finger_initialized[1] = (jaco_state_t)data[ 1];
+    status.finger_initialized[2] = (jaco_state_t)data[ 2];
+    status.retract               = (jaco_retract_mode_t)data[ 4];
+    status.controller            = (jaco_state_t)data[ 6];
+    status.force_control         = (jaco_state_t)data[10];
+    status.current_limitation    = (jaco_state_t)data[11];
+    status.torque_sensor         = (jaco_state_t)data[14];
+  }
+
+  return e;
+}
+
+/** Use method with much more data traffic to filter status.
+ * Contains much more data, but only little of it is of interest for us.*/
+error_t
+JacoArm::_get_retract_status(jaco_status_t &status)
+{
+  status.finger_initialized[0] = STATE_UNKNOWN;
+  status.finger_initialized[1] = STATE_UNKNOWN;
+  status.finger_initialized[2] = STATE_UNKNOWN;
+  status.controller            = STATE_UNKNOWN;
+  status.force_control         = STATE_UNKNOWN;
+  status.current_limitation    = STATE_UNKNOWN;
+  status.torque_sensor         = STATE_UNKNOWN;
+  status.retract               = MODE_ERROR;
+
+  usb_packet_t p;
+  error_t e;
+  for( unsigned int i=1; i<=19; ++i ) {
+    _usb_header(p, i, 1, CMD_GET_ARM_INFO, 1);
+    e = _cmd_out_in(p);
+    if( e != ERROR_NONE )
+      return e;
+
+    if( i==2 )
+      memcpy(&status.retract, p.data+8+52, sizeof(status.retract));
+  }
+
+  return e;
+}
+
 error_t
 JacoArm::_update_client_config()
 {
@@ -1083,29 +1139,33 @@ JacoArm::get_firmware(bool refresh)
   return __firmware;
 }
 
-/** Get the current retract mode of Jaco arm.
- * This method can be for instance be useful to decide when, which and how many joystick
+/** Get the current status of Jaco arm.
+ * Use this method to check if modes are available/enabled/initialized.
+ * This method can also be used to decide when, which and how many joystick
  * buttons to simulate to move into/from HOME/RETRACT position.
- * @return the retract mode (check enum jaco_retract_mode)
+ *
+ * Most of this data is only available on firmware with DSP.MAJOR >= 5.
+ * On older DSP firmware, most fields will be in STATE_UNKNOWN.
+ *
+ * @return The status of the arm.
  */
-jaco_retract_mode_t
+jaco_status_t
 JacoArm::get_status()
 {
-  jaco_retract_mode_t mode = MODE_ERROR;
-
-  usb_packet_t p;
+  jaco_status_t status;
   error_t e;
-  for( unsigned int i=1; i<=19; ++i ) {
-    _usb_header(p, i, 1, CMD_GET_ARM_INFO, 1);
-    e = _cmd_out_in(p);
-    if( e != ERROR_NONE )
-      throw KinDrvException(e, "Could not get arm status! libusb error.");
 
-    if( i==2 )
-      memcpy(&mode, p.data+8+52, sizeof(mode));
-  }
+  if( __firmware.dsp[0] >= 5 )
+    e = _get_status(status);
+  else
+    e = _get_retract_status(status);
 
-  return mode;
+  if( e == ERROR_CMD_ID_MISMATCH )
+    throw KinDrvException(e, "Could not get arm status, received packet with wrong CMD_ID.");
+  else if( e != ERROR_NONE )
+    throw KinDrvException(e, "Could not get arm status! libusb error.");
+
+  return status;
 }
 
 /** Simulate a push of a joystick button.

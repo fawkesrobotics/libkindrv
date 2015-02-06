@@ -35,7 +35,7 @@ goto_retract(JacoArm *arm)
   // will move to HOME. You'll probably need to uncomment the gripper movements
   // in order for this to work. Or even better, implement moving to HOME position,
   // which could be triggered before going to RETRACT ;)
-  jaco_retract_mode_t mode = arm->get_status();
+  jaco_retract_mode_t mode = arm->get_status().retract;
   switch( mode ) {
     case MODE_READY_TO_RETRACT:
       // is currently on the way to RETRACT. Need 2 button presses,
@@ -71,7 +71,7 @@ goto_retract(JacoArm *arm)
 
   while( mode != MODE_RETRACT_STANDBY ) {
     usleep(1000*10); // 10 ms
-    mode = arm->get_status();
+    mode = arm->get_status().retract;
   }
   arm->release_joystick();
 
@@ -84,7 +84,7 @@ goto_home(JacoArm *arm)
 {
   // going to HOME position is possible from all positions. Only problem is,
   // if there is some kinfo of error
-  jaco_retract_mode_t mode = arm->get_status();
+  jaco_retract_mode_t mode = arm->get_status().retract;
   switch( mode ) {
     case MODE_RETRACT_TO_READY:
       // is currently on the way to HOME. Need 2 button presses,
@@ -116,7 +116,7 @@ goto_home(JacoArm *arm)
 
   while( mode != MODE_READY_STANDBY ) {
     usleep(1000*10); // 10 ms
-    mode = arm->get_status();
+    mode = arm->get_status().retract;
     if( mode == MODE_READY_TO_RETRACT ) {
       arm->release_joystick();
       arm->push_joystick_button(2);
@@ -154,7 +154,7 @@ int main()
 
 
   //check if we need to initialize arm
-  jaco_retract_mode_t mode = arm->get_status();
+  jaco_retract_mode_t mode = arm->get_status().retract;
   printf("Arm is currently in state: %i \n", mode);
   if( mode == MODE_NOINIT ) {
     //push the "HOME/RETRACT" button until arm is initialized
@@ -162,7 +162,7 @@ int main()
 
     while( mode == MODE_NOINIT ) {
       usleep(1000*10); // 10 ms
-      mode = arm->get_status();
+      mode = arm->get_status().retract;
     }
 
     arm->release_joystick();
