@@ -1175,15 +1175,10 @@ JacoArm::get_status()
 void
 JacoArm::push_joystick_button(unsigned short id)
 {
-  usb_packet_t p;
-  _usb_header(p, 1, 1, CMD_JOYSTICK, 56);
-
-  unsigned short *buttons = (unsigned short*)p.body;
-  buttons[id] = 1;
-
-  error_t e = _cmd_out_in(p);
-  if( e != ERROR_NONE )
-    throw KinDrvException("Could not push joystick button! libusb error.");
+  jaco_joystick_t state;
+  memset(&state, 0, sizeof(state));
+  state.button[id] = 1;
+  move_joystick(state);
 }
 
 /** Simulate a push of multiple joystick buttons.
@@ -1209,7 +1204,7 @@ JacoArm::move_joystick_axis(jaco_joystick_axis_t &axes)
 {
   jaco_joystick_t state;
   memset(&state, 0, sizeof(state));
-  memcpy(&(state.axis), &axes, 24);
+  memcpy(&(state.axis), &axes, sizeof(state.axis));
   move_joystick(state);
 }
 
@@ -1224,7 +1219,18 @@ JacoArm::move_joystick(jaco_joystick_t &state)
   _usb_header(p, 1, 1, CMD_JOYSTICK, 56);
   memcpy(&(p.body), &state, 56);
 
-  error_t e = _cmd_out_in(p);
+  error_t e = ERROR_NONE;
+
+  // On newer firmwares, sometimes 1 command does not trigger. Need to wait and send again
+  if( __firmware.dsp[0] >= 5) {
+    usb_packet_t p2 = p;
+    e = _cmd_out_in(p2);
+    usleep(100e3);
+  }
+
+  if( e == ERROR_NONE )
+    e = _cmd_out_in(p);
+
   if( e != ERROR_NONE )
     throw KinDrvException("Could not send joystick command! libusb error.");
 }
