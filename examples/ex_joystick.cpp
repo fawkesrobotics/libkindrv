@@ -184,70 +184,70 @@ int main()
   // Also make sure, that all the fields of a joystick-structs that should not have an effect are set to 0! So initialize all jaco_joystick_ structs with 0!
   jaco_joystick_axis_t axes = {0};
 
-  printf("* translate forth \n");
-  axes.trans_fb = -2.5;
-  arm->move_joystick_axis(axes);
-  usleep(2e6);
-  arm->release_joystick();
-  printf("* translate back \n");
-  axes.trans_fb = 2.5;
-  arm->move_joystick_axis(axes);
-  usleep(2e6);
-  arm->release_joystick();
-  axes.trans_fb = 0.f;
-
   printf("* translate left \n");
   axes.trans_lr = 2.5f;
   arm->move_joystick_axis(axes);
-  usleep(2e6);
+  usleep(1e6);
   arm->release_joystick();
   printf("* translate right \n");
   axes.trans_lr = -2.5f;
   arm->move_joystick_axis(axes);
-  usleep(2e6);
+  usleep(1e6);
   arm->release_joystick();
   axes.trans_lr = 0.f;
 
-  printf("* translate up \n");
-  axes.trans_rot = 2.5;
+  printf("* translate forth \n");
+  axes.trans_fb = -2.5f;
   arm->move_joystick_axis(axes);
-  usleep(2e6);
+  usleep(1e6);
+  arm->release_joystick();
+  printf("* translate back \n");
+  axes.trans_fb = 2.5f;
+  arm->move_joystick_axis(axes);
+  usleep(1e6);
+  arm->release_joystick();
+  axes.trans_fb = 0.f;
+
+  printf("* translate up \n");
+  axes.trans_rot = 2.5f;
+  arm->move_joystick_axis(axes);
+  usleep(1e6);
   arm->release_joystick();
   printf("* translate down \n");
-  axes.trans_rot = -2.5;
+  axes.trans_rot = -2.5f;
   arm->move_joystick_axis(axes);
-  usleep(2e6);
+  usleep(1e6);
   arm->release_joystick();
   axes.trans_rot = 0.f;
+
+  printf("* wrist forth \n");
+  axes.wrist_lr = 2.5f;
+  arm->move_joystick_axis(axes);
+  usleep(1e6);
+  arm->release_joystick();
+  printf("* wrist back \n");
+  axes.wrist_lr = -2.5f;
+  arm->move_joystick_axis(axes);
+  usleep(1e6);
+  arm->release_joystick();
+  axes.wrist_lr = 0.f;
 
   printf("* wrist up \n");
   axes.wrist_fb = 2.5f;
   arm->move_joystick_axis(axes);
-  usleep(2e6);
+  usleep(1e6);
   arm->release_joystick();
   printf("* wrist down \n");
   axes.wrist_fb = -2.5f;
   arm->move_joystick_axis(axes);
-  usleep(2e6);
+  usleep(1e6);
   arm->release_joystick();
   axes.wrist_fb = 0.f;
 
-  printf("* wrist forth \n");
-  axes.wrist_lr = 2.5;
+  printf("* rotate clockwise \n");
+  axes.wrist_rot = 2.5f;
   arm->move_joystick_axis(axes);
-  usleep(2e6);
-  arm->release_joystick();
-  printf("* wrist back \n");
-  axes.wrist_lr = -2.5;
-  arm->move_joystick_axis(axes);
-  usleep(2e6);
-  arm->release_joystick();
-  axes.wrist_lr = 0.f;
-
-  printf("* rotate counter-clockwise \n");
-  axes.wrist_rot = 2.5;
-  arm->move_joystick_axis(axes);
-  usleep(3e6);
+  usleep(1e6);
   arm->release_joystick();
   axes.wrist_rot = 0.f;
 
