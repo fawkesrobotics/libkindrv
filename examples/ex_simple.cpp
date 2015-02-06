@@ -75,6 +75,19 @@ int main()
   for(unsigned int i=0; i<2; ++i)
     printf("    CAN %u = %u.%u.%u \n", i, firmware.can[i][0], firmware.can[i][1], firmware.can[i][2]);
 
+ try {
+    printf("Get status: \n");
+    jaco_status_t status = arm->get_status();
+    printf(" finger initialized : [%i, %i, %i] \n",
+           status.finger_initialized[0], status.finger_initialized[1], status.finger_initialized[2]);
+    printf(" retract mode       : %i \n", status.retract);
+    printf(" controller         : %i \n", status.controller);
+    printf(" force_control      : %i \n", status.force_control);
+    printf(" current_limitation : %i \n", status.current_limitation);
+    printf(" torque_sensors     : %i \n", status.torque_sensor);
+  } catch(KinDrvException &e) {
+    printf("ERROR: %s\n", e.what());
+  }
 
   // explicitly close libusb context
   KinDrv::close_usb();
