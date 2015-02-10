@@ -133,11 +133,6 @@ int main()
 {
   printf("KinDrv example for controlling the arm \n");
 
-  // explicitly initialize a libusb context; optional
-  KinDrv::init_usb();
-
-
-
   printf("Create a JacoArm \n");
   JacoArm *arm;
   try {
@@ -263,7 +258,5 @@ int main()
     }
   }
 
-  // explicitly close libusb context (only needed if explicitly openede before)
-  KinDrv::close_usb();
   return 0;
 }

@@ -32,9 +32,6 @@ int main()
 {
   printf("OpenJaco example, showing how to connect to more than 1 arm \n");
 
-  // explicitly initialize a libusb context
-  KinDrv::init_usb();
-
   JacoArm *arm;
   JacoArm *arm2;
 
@@ -93,9 +90,5 @@ int main()
   arm2->release_joystick();
   usleep(1000*50);
 
-
-
-  // explicitly close libusb context
-  KinDrv::close_usb();
   return 0;
 }

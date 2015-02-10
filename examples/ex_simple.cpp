@@ -32,9 +32,6 @@ int main()
 {
   printf("KinDriv library usage example \n");
 
-  // explicitly initialize a libusb context
-  KinDrv::init_usb();
-
   printf("Create a JacoArm \n");
   JacoArm *arm;
   try {
@@ -64,7 +61,5 @@ int main()
   printf(" id:%s \n name:%s \n organizaion:%s \n sn:%s \n model_no:%s \n",
          config.id, config.name, config.organization, config.sn, config.model_no);
 
-  // explicitly close libusb context
-  KinDrv::close_usb();
   return 0;
 }

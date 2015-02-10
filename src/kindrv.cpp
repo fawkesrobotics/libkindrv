@@ -81,9 +81,11 @@ typedef struct usb_device_struct {
 
 /** The libusb context. Set this so that it doesn't interfer with other contexts,
  * and such that including this lib would use the same context. */
-static libusb_context *__ctx = NULL;
-static bool            __auto_ctx = false;
-static std::list<usb_device_t> *__connected_arms = new std::list<usb_device_t>();
+static libusb_context*  __ctx = NULL;
+static boost::mutex     __ctx_lock;     /**< Lock this mutex whenever modifying __ctx */
+static int              __ctx_user = 0; /**< Counting "users" of __ctx. Helps deciding when not to open/close __ctx */
+
+static std::list<usb_device_t>* __connected_arms = new std::list<usb_device_t>();
 
 /*
 #define USB_CMD(ep,msg)         \
@@ -104,6 +106,80 @@ static std::list<usb_device_t> *__connected_arms = new std::list<usb_device_t>()
 /* /================================================\
  *   Private libusb-control methods
  * \================================================/ */
+/** Unref the stored libusb_device pointers.
+ * It will also remove the device from the list of known connected arms. */
+void
+unref_connected_devs(bool remove/*=false*/)
+{
+  for (std::list<usb_device_t>::iterator it=__connected_arms->begin(); it != __connected_arms->end(); ++it) {
+    if( !(*it).connected ) {
+      libusb_unref_device((*it).dev);
+      if( remove )
+        it = __connected_arms->erase(it);
+    }
+  }
+}
+
+/** Initialize libusb.
+ * This makes sure a libusb context is available. The context is used for
+ * the wohle KinDrv library.
+ * Mutexes and counters make sure that the context stays alive as long as
+ * it is in use. So you can (and should) call this method whenever needed.
+ *
+ * The context is always created implicitly when needed (e.g. when
+ * creating a JacoArm instance).
+ *
+ * Make sure to call close_usb() after you finished using the libusb context.
+ */
+void
+init_usb()
+{
+  boost::lock_guard<boost::mutex> lock(__ctx_lock);
+
+  if( __ctx == NULL ) {
+    int r = libusb_init(&__ctx);
+    if( r<0 ) {
+      //fprintf(stderr, "Error initializing libusb. libusb-error: %i", r);
+      throw KinDrvException(ERROR_USB_INIT, "Failed to initialize libusb context");
+    }
+  }
+
+  ++__ctx_user;
+}
+
+/** Exit libusb.
+ * This indicates that you don't need the libusb context anymore for the
+ * function, instance or thread that used it up to now.
+ *
+ * The libusb context is closed on only if it is not in use anymore. Mutex
+ * and counters make sure of this.
+ * CAUTION, closing the libusb context means you cannot use other libusb
+ * functions afterwards! So DO NOT close the context if you're still operating on
+ * connected devices.
+ */
+void
+close_usb()
+{
+  boost::lock_guard<boost::mutex> lock(__ctx_lock);
+
+  // Check if __ctx is still in use (after decrease the counter)
+  if( --__ctx_user > 0 )
+    return;
+
+  // Check if devices are still connected.
+  // Should not be the case if __ctx_user==0, but just to make sure...
+  for (std::list<usb_device_t>::iterator it=__connected_arms->begin(); it != __connected_arms->end(); ++it) {
+    if( (*it).connected )
+      return;
+  }
+
+  unref_connected_devs(/*remove*/ true);
+
+  libusb_exit(__ctx);
+  __ctx = NULL;
+}
+
+
 void
 list_devices(libusb_device **devices)
 {
@@ -143,16 +219,6 @@ print_message(usb_packet_t &msg)
 void
 get_connected_devs()
 {
-  bool tmp_ctx = false;
-  if( __ctx == NULL ) {
-    // try creating a temporary context
-    error_t err = init_usb();
-    if( err != ERROR_NONE )
-       throw KinDrvException(err, "Failed to initialize temporary libusb context");
-    else
-      tmp_ctx = true;
-  }
-
   // Get all devices
   ssize_t cnt;
   libusb_device** devices;
@@ -212,79 +278,17 @@ get_connected_devs()
 
   found_arms->clear();
   delete(found_arms);
-
-  if( tmp_ctx )
-    close_usb();
 }
 
-void
-unref_connected_devs(bool remove/*=false*/)
-{
-  for (std::list<usb_device_t>::iterator it=__connected_arms->begin(); it != __connected_arms->end(); ++it) {
-    if( !(*it).connected ) {
-      libusb_unref_device((*it).dev);
-      if( remove )
-        it = __connected_arms->erase(it);
-    }
-  }
-}
 
 /* /================================================\
  *   Public libusb-control methods
  * \================================================/ */
-/** Initialize libusb.
- * This creates a libusb context which is used for the whole KinDrv library.
- * Although a context is always created implicitly when needed (e.g. when
- * creating a JacoArm instance), it is possible for the user to explicitly init
- * libusb.
- * Implicit creation also deletes the context when the "creator" is destroyed
- * (e.g. deleting the JacoArm instance), so this method can be used to sustain
- * the context until the end. That also means, that after an explicit 'init',
- * there should follow an explicit 'close' some time later.
- * @return Potential error (see enum error_t)
- */
-error_t
-init_usb()
-{
-  int r = libusb_init(&__ctx);
-  if( r<0 ) {
-    fprintf(stderr, "Error initializing libusb. libusb-error: %i", r);
-    return ERROR_USB_INIT;
-  }
-
-  return ERROR_NONE;
-}
-
-/** Exit libusb.
- * This closes the explicitly created libusb context. It is not needed to call
- * this when 'init_usb()' has not been called before. Doing so does
- * no harm (no exception throwing etc.).
- * However, CAUTION, closing the libusb context means you cannot use other libusb
- * functions afterwards! So DO NOT close the context, if you're still operating on
- * connected devices.
- */
-void
-close_usb()
-{
-  unref_connected_devs(/*remove*/ true);
-
-  libusb_exit(__ctx);
-  __ctx = NULL;
-}
-
 /** List available usb devices. */
 void
 list_devices()
 {
-  bool tmp_ctx = false;
-  if( __ctx == NULL ) {
-    // try creating a temporary context
-    error_t err = init_usb();
-    if( err != ERROR_NONE )
-       throw KinDrvException(err, "Failed to initialize temporary libusb context");
-    else
-      tmp_ctx = true;
-  }
+  init_usb();
 
   // Get devices
   ssize_t cnt;
@@ -301,8 +305,7 @@ list_devices()
     libusb_free_device_list(devices, /*auto-unref*/ true);
   }
 
-  if( tmp_ctx )
-    close_usb();
+  close_usb();
 }
 
 
@@ -393,13 +396,8 @@ JacoArm::_cmd_out(short cmd)
 JacoArm::JacoArm() :
   __devh( 0 )
 {
-  if( __ctx == NULL ) {
-    // initialize libusb
-    error_t e = init_usb();
-    if( e != ERROR_NONE )
-      throw KinDrvException(e, "Abort creating JacoArm, libusb could not be initialized");
-    __auto_ctx = true;
-  }
+  // initialize libusb
+  init_usb();
 
   //  refreshing the devices list
   get_connected_devs();
@@ -463,16 +461,7 @@ JacoArm::~JacoArm()
     libusb_close(__devh);
   }
 
-  if( __auto_ctx ) {
-    // libusb context was created implicitly. Check if devices are still connected
-    for (std::list<usb_device_t>::iterator it=__connected_arms->begin(); it != __connected_arms->end(); ++it) {
-      if( (*it).connected )
-        return;
-    }
-    // libusb context was created implicitly. so delete it now
-    close_usb();
-    __auto_ctx = false;
-  }
+  close_usb();
 }
 
 

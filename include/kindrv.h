@@ -39,10 +39,6 @@ namespace KinDrv {
 // internally used struct (see kindrv.cpp for details)
 typedef struct usb_device_struct usb_device_t;
 
-// just to allow using them explicitly. The API will use them implicitly if necessary
-error_t init_usb();
-void close_usb();
-
 void list_devices();
 
 /// \brief Main JacoArm class. All communication is done via an instance of this
