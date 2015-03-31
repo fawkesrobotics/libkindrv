@@ -4,7 +4,7 @@ cmake_minimum_required (VERSION 2.6)
 include_directories (${libkindrv_SOURCE_DIR}/include)
 
 # set as shared library
-add_library (kindrv SHARED kindrv.cpp exception.cpp)
+add_library (kindrv SHARED kindrv.cpp jaco_sensors.cpp exception.cpp)
 
 set_target_properties(
   kindrv

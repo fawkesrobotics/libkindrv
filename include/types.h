@@ -41,6 +41,9 @@ typedef enum {
   ERROR_USB_SHORT_READ  = 203,
 
   ERROR_CMD_ID_MISMATCH = 301,
+
+  ERROR_SERIAL_ACCESS   = 401,
+  ERROR_SERIAL_READ     = 402,
 } error_t;
 
 typedef enum {
@@ -187,6 +190,14 @@ typedef struct {
 */
 } jaco_client_config_t; //2088 bytes
 
+
+/** Each tactile sensor is divided into 12 areas: 4 rows, 3 cols.
+ * Area id's start at bottom right, increasing to the left, then going up one row.
+ */
+typedef struct {
+  unsigned short raw[12];        /**< The raw value as received from the serial interface. */
+  unsigned short normalized[12]; /**< Normalized value, i.e. the difference to the initial value. */
+} jaco_sensor_pressure_t;
 
 /// \brief USB packet header struct. All USB packets must have this header structure.
 typedef struct {

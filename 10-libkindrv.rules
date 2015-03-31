@@ -1,2 +1,3 @@
 #libkindrv Kinova arm rules
 SUBSYSTEM=="usb", ATTR{idVendor}=="22cd", MODE="0666", GROUP="users"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0856", ATTRS{idProduct}=="ac25", MODE="0666", GROUP="users", SYMLINK+="jacoSensors"
