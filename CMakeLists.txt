@@ -4,7 +4,7 @@ project (libkindrv)
 # The version number.
 set (libkindrv_VERSION_MAJOR 0)
 set (libkindrv_VERSION_MINOR 1)
-set (libkindrv_VERSION_PATCH 1)
+set (libkindrv_VERSION_PATCH 2)
 set (libkindrv_VERSION ${libkindrv_VERSION_MAJOR}.${libkindrv_VERSION_MINOR}.${libkindrv_VERSION_PATCH})
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
