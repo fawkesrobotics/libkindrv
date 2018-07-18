@@ -35,8 +35,9 @@ install (FILES "${CMAKE_CURRENT_BINARY_DIR}/libkindrv.pc" DESTINATION "${CMAKE_I
 
 # install udev-rule
 option (INSTALL_UDEV "Install udev-rule? Needs root privileges, as it writes to '/etc' directory." ON)
+set (UDEV_INSTALL_DIR "/etc/udev/rules.d" CACHE STRING "Destination for udev rules")
 if (INSTALL_UDEV)
-  install (FILES "10-libkindrv.rules" DESTINATION "/etc/udev/rules.d" OPTIONAL)
+  install (FILES "10-libkindrv.rules" DESTINATION ${UDEV_INSTALL_DIR} OPTIONAL)
 endif()
 
 # apidoc target
