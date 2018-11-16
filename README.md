@@ -7,6 +7,17 @@ Open source library with libusb-based drivers to control robotic arms by Kinova.
 Installing:
 ====================
 
+## Precompiled packages
+
+If you are on Fedora, you can directly install libkindrv:
+
+    # dnf install libkindrv
+
+
+If you want to develop your application using libkindrv, you should also install
+`libkindrv-devel`.
+
+## Building from source
 The installation procedure is based on cmake and contains nothing
 more than the usual procedure:
 
