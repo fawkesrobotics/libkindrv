@@ -21,27 +21,27 @@ If you want to develop your application using libkindrv, you should also install
 The installation procedure is based on cmake and contains nothing
 more than the usual procedure:
 
-  # 1. Make a "build" directory inside libkindrv directory
+1. Make a "build" directory inside libkindrv directory
 
-    mkdir build
+       mkdir build
 
-  # 2. Run cmake from inside the "build" directory
+2. Run cmake from inside the "build" directory
 
-    cd build
-    cmake ..
+       cd build
+       cmake ..
 
-  # 3. Build the kindrv library
+3. Build the kindrv library
 
-    make
+       make
 
-  # 4. Install the kindrv library (may need root privileges)
+4. Install the kindrv library (may need root privileges)
 
-    make install
+       make install
 
-  # 5. [Optional] Remove "build" directory. Skip this step if you want to allow fast uninstalling.
+5. [Optional] Remove "build" directory. Skip this step if you want to allow fast uninstalling.
 
-    cd ..
-    rm -rf build
+       cd ..
+       rm -rf build
 
 
 Uninstalling:
@@ -73,4 +73,3 @@ using the GUI version of cmake in installation step #2 with
 
     cd build
     ccmake ..
-
