@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required (VERSION 3.6)
 
 # include directory containing header files
 include_directories (${libkindrv_SOURCE_DIR}/include)
